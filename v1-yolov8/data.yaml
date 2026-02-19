@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 13
+names: ['Shorts', 'Siting', 'Standing', 'blanket', 'coat', 'dress', 'jacket', 'long sleeve shirt', 'short sleeve shirt', 'skirt', 'sweater', 'trousers', 'vest']
+
+roboflow:
+  workspace: mess-gqhrb
+  project: clothes-detection-sjpkr-n67wg
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/mess-gqhrb/clothes-detection-sjpkr-n67wg/dataset/1
