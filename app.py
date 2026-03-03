@@ -170,9 +170,17 @@ import base64
 import mediapipe as mp
 import math
 from werkzeug.utils import secure_filename
+import numpy as np
+import copy
 
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
+from styling_rules import get_styling_recommendations
+
+# ---------------- MEDIA PIPE SETUP ----------------
+mp_face_mesh = mp.solutions.face_mesh
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
 
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
@@ -206,6 +214,79 @@ def classify_body_type(shoulder_ratio, waist_ratio, highhip_waist_ratio):
     else:
         return "rectangle", "Measurements fairly balanced", 0.70
 
+
+
+# ---------------- FACE SHAPE CLASSIFIER ----------------
+def classify_face_shape(landmarks):
+    # Landmarks indices
+    LANDMARKS_ID = {
+        'chin': 152, 'forehead': 10,
+        'left_cheekbone': 234, 'right_cheekbone': 454,
+        'left_jaw': 172, 'right_jaw': 397,
+        'left_temple': 162, 'right_temple': 389
+    }
+    
+    # Helper to get coord
+    def get_pt(name):
+        return np.array(landmarks[LANDMARKS_ID[name]])
+
+    # Calculate distances
+    face_length = np.linalg.norm(get_pt('forehead') - get_pt('chin'))
+    cheekbone_width = np.linalg.norm(get_pt('left_cheekbone') - get_pt('right_cheekbone'))
+    jaw_width = np.linalg.norm(get_pt('left_jaw') - get_pt('right_jaw'))
+    forehead_width = np.linalg.norm(get_pt('left_temple') - get_pt('right_temple'))
+
+    # Ratios
+    if cheekbone_width == 0 or jaw_width == 0 or forehead_width == 0:
+        return "Unknown"
+        
+    length_to_cheekbone = face_length / cheekbone_width
+    jaw_to_forehead = jaw_width / forehead_width
+    cheekbone_to_jaw = cheekbone_width / jaw_width
+
+    # Logic
+    if length_to_cheekbone > 1.35:
+        if jaw_to_forehead < 0.85: return "Heart"
+        elif jaw_to_forehead > 1.15: return "Triangle"
+        else: return "Oblong"
+    elif length_to_cheekbone < 1.1:
+        if abs(cheekbone_width - jaw_width) < 0.1 * face_length: return "Round"
+        else: return "Square"
+    elif cheekbone_to_jaw > 1.15:
+        return "Diamond"
+    elif abs(cheekbone_width - jaw_width) < 0.08 * face_length:
+        return "Square"
+    else:
+        return "Oval"
+
+# ---------------- SKIN TONE DETECTOR ----------------
+def classify_skin_tone(image, landmarks):
+    h, w, _ = image.shape
+    # Nose tip is index 1
+    nose_pt = landmarks[1] 
+    nose_x, nose_y = int(nose_pt[0]), int(nose_pt[1])
+    
+    # Crop a small region around nose
+    patch_size = 20
+    x1, y1 = max(0, nose_x - patch_size), max(0, nose_y - patch_size)
+    x2, y2 = min(w, nose_x + patch_size), min(h, nose_y + patch_size)
+    
+    patch = image[y1:y2, x1:x2]
+    if patch.size == 0: return "Unknown"
+    
+    # Convert to RGB
+    patch_rgb = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
+    
+    # Average color
+    avg_color = np.mean(patch_rgb.reshape(-1, 3), axis=0)
+    r, g, b = avg_color
+    
+    # Simple manual thresholds for skin tone
+    luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    
+    if luminance > 180: return "Fair"
+    elif luminance > 130: return "Medium"
+    else: return "Dark"
 
 # ---------------- API ----------------
 @app.route("/analyze", methods=["POST"])
@@ -244,37 +325,134 @@ def analyze_image():
         lh = coord(mp_pose.PoseLandmark.LEFT_HIP.value)
         rh = coord(mp_pose.PoseLandmark.RIGHT_HIP.value)
 
-        wl = (
-            int((ls[0] + lh[0]) / 2),
-            int((ls[1] + lh[1]) / 2)
-        )
-        wr = (
-            int((rs[0] + rh[0]) / 2),
-            int((rs[1] + rh[1]) / 2)
-        )
+        # ---------------- TORSO SCANNING (IMPROVED ACCURACY) ----------------
+        # Scan multiple points between shoulders and hips to find:
+        # 1. True Waist (narrowest point)
+        # 2. Stomach/Belly (widest point)
+        
+        num_points = 10
+        min_width = float('inf')  # Becomes True Waist
+        max_width = 0             # Becomes Stomach/Belly
+        
+        # We need normalized coordinates for scanning to handle perspective
+        # But we'll use pixel distances for the final ratios
+        
+        for i in range(num_points + 1):
+            t = i / num_points
+            # Interpolate left side point
+            lx = int(ls[0] * (1 - t) + lh[0] * t)
+            ly = int(ls[1] * (1 - t) + lh[1] * t)
+            
+            # Interpolate right side point
+            rx = int(rs[0] * (1 - t) + rh[0] * t)
+            ry = int(rs[1] * (1 - t) + rh[1] * t)
+            
+            # Calculate width at this level
+            current_width = euclidean_distance((lx, ly), (rx, ry))
+            
+            if current_width < min_width:
+                min_width = current_width
+            
+            if current_width > max_width:
+                max_width = current_width
 
+        waist_width = min_width      # The narrowest point is the waist
+        stomach_width = max_width    # The widest point might be the stomach (for Apple)
+
+        # Calculate base widths
         shoulder_width = euclidean_distance(ls, rs)
         hip_width = euclidean_distance(lh, rh)
-        waist_width = euclidean_distance(wl, wr)
 
+        # Re-calculate ratios with new measurements
         shoulder_ratio = shoulder_width / hip_width
         waist_ratio = waist_width / shoulder_width
-        highhip_waist_ratio = hip_width / waist_width
+        stomach_ratio = stomach_width / hip_width
+        highhip_waist_ratio = hip_width / waist_width # Added back for compatibility
 
-        body_type, logic_used, confidence = classify_body_type(
-            shoulder_ratio,
-            waist_ratio,
-            highhip_waist_ratio
-        )
+        # Enhanced Classification Logic
+        body_type = "rectangle" # Default
+        confidence = 0.75
+        logic_used = "Standard Ratios"
+
+        # Apple Detection (High Stomach Width)
+        if stomach_ratio > 1.05 and waist_ratio > 0.85:
+             # Stomach dominates
+             body_type = "apple"
+             confidence = 0.85
+             logic_used = "Torso Scan Detected Wide Midsection"
+        
+        # Hourglass (Strong Waist Definition)
+        elif abs(shoulder_ratio - 1.0) <= 0.1 and waist_ratio <= 0.75:
+             body_type = "hourglass"
+             confidence = 0.90
+             logic_used = "Torso Scan Detected Narrow Waist"
+             
+        # Triangle (Hips > Shoulders)
+        elif shoulder_ratio < 0.90:
+             # Check if it's truly triangle or just pear-shaped hourglass
+             if waist_ratio < 0.75:
+                 body_type = "hourglass" # Bottom-heavy hourglass
+                 logic_used = "Definition: Curvy Hips"
+             else:
+                 body_type = "triangle"
+                 confidence = 0.85
+                 logic_used = "Shoulder/Hip Ratio"
+        
+        # Inverted Triangle (Shoulders > Hips)
+        elif shoulder_ratio > 1.15:
+             body_type = "inverted_triangle"
+             confidence = 0.85
+             logic_used = "Broad Shoulders"
+             
+        # Rectangle (Balanced, no defined waist)
+        else:
+             if waist_ratio > 0.82:
+                 body_type = "rectangle"
+                 confidence = 0.80
+                 logic_used = "Balanced Measurements"
+             else:
+                 # Slight curve but not full hourglass
+                 body_type = "hourglass"
+                 confidence = 0.70
+                 logic_used = "Moderate Curves"
+
+    # =====================================================
+    # 🟣 PART 3: FACE & SKIN ANALYSIS
+    # =====================================================
+    face_shape = "Unknown"
+    skin_tone = "Unknown"
+
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1) as face_mesh:
+        results_face = face_mesh.process(rgb)
+        
+        if results_face.multi_face_landmarks:
+            face_landmarks = results_face.multi_face_landmarks[0]
+            
+            # Convert landmarks to pixel coordinates needed for our functions
+            h, w, _ = image.shape
+            lm_pixels = {}
+            for idx, lm in enumerate(face_landmarks.landmark):
+                lm_pixels[idx] = (int(lm.x * w), int(lm.y * h))
+            
+            face_shape = classify_face_shape(lm_pixels)
+            skin_tone = classify_skin_tone(image, lm_pixels)
 
     # =====================================================
     # 🟢 PART 2: OUTFIT DETECTION (YOLO MODULE)
     # =====================================================
     outfits = detect_outfits(image)
 
+    # =====================================================
+    # 🟠 PART 4: STYLING RECOMMENDATIONS
+    # =====================================================
+    styling_info = get_styling_recommendations(body_type, face_shape, skin_tone)
+
+
     # ---------------- FINAL RESPONSE ----------------
     return jsonify({
         "body_type": body_type,
+        "face_shape": face_shape,
+        "skin_tone": skin_tone,
         "logic_used": logic_used,
         "confidence_score": confidence,
         "measurements": {
@@ -282,7 +460,8 @@ def analyze_image():
             "waist_ratio": round(waist_ratio, 2),
             "highhip_waist_ratio": round(highhip_waist_ratio, 2)
         },
-        "outfits": outfits
+        "outfits": outfits,
+        "styling": styling_info
     })
 
 
