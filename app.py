@@ -262,31 +262,57 @@ def classify_face_shape(landmarks):
 # ---------------- SKIN TONE DETECTOR ----------------
 def classify_skin_tone(image, landmarks):
     h, w, _ = image.shape
-    # Nose tip is index 1
-    nose_pt = landmarks[1] 
-    nose_x, nose_y = int(nose_pt[0]), int(nose_pt[1])
     
-    # Crop a small region around nose
-    patch_size = 20
-    x1, y1 = max(0, nose_x - patch_size), max(0, nose_y - patch_size)
-    x2, y2 = min(w, nose_x + patch_size), min(h, nose_y + patch_size)
+    # We use Left Cheek (234), Right Cheek (454), and Lower Forehead (10)
+    target_landmarks = [234, 454, 10]
+    patches = []
+    patch_size = 15 # slightly smaller to ensure we only get skin
     
-    patch = image[y1:y2, x1:x2]
-    if patch.size == 0: return "Unknown"
+    for idx in target_landmarks:
+        if idx in landmarks:
+            px, py = landmarks[idx]
+            x1, y1 = max(0, px - patch_size), max(0, py - patch_size)
+            x2, y2 = min(w, px + patch_size), min(h, py + patch_size)
+            patch = image[y1:y2, x1:x2]
+            if patch.size > 0:
+                patches.append(patch)
+                
+    if not patches:
+        return "Unknown", "Unknown"
+        
+    # Average all patches to get one unified RGB color
+    avg_color_bgr = np.mean([np.mean(p.reshape(-1, 3), axis=0) for p in patches], axis=0)
+    avg_color_bgr_uint8 = np.uint8([[avg_color_bgr]])
     
-    # Convert to RGB
-    patch_rgb = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
+    # Convert exactly from BGR to LAB
+    lab_color = cv2.cvtColor(avg_color_bgr_uint8, cv2.COLOR_BGR2LAB)[0][0]
+    l_opencv, a_opencv, b_opencv = lab_color
     
-    # Average color
-    avg_color = np.mean(patch_rgb.reshape(-1, 3), axis=0)
-    r, g, b = avg_color
+    # Mathematical conversion to standard CIE L*a*b* (L: 0-100, a/b: ~ -128 to 127)
+    l_true = (l_opencv * 100.0) / 255.0
+    a_true = a_opencv - 128.0
+    b_true = b_opencv - 128.0
     
-    # Simple manual thresholds for skin tone
-    luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    # Skin Tone classification based on standard Luminance (L)
+    if l_true > 70:
+        skin_tone = "Fair"
+    elif 50 < l_true <= 70:
+        skin_tone = "Medium"
+    else:
+        skin_tone = "Dark"
+        
+    # Undertone classification based on A (Red/Green) and B (Yellow/Blue) channels
+    # A positive threshold means the color strongly leans towards Yellow or Red
+    threshold = 2.0
     
-    if luminance > 180: return "Fair"
-    elif luminance > 130: return "Medium"
-    else: return "Dark"
+    if (b_true - a_true) > threshold:
+        undertone = "Warm"
+    elif (a_true - b_true) > threshold:
+        undertone = "Cool"
+    else:
+        undertone = "Neutral"
+        
+    return skin_tone, undertone
 
 # ---------------- API ----------------
 @app.route("/analyze", methods=["POST"])
@@ -421,6 +447,7 @@ def analyze_image():
     # =====================================================
     face_shape = "Unknown"
     skin_tone = "Unknown"
+    undertone = "Unknown"
 
     with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1) as face_mesh:
         results_face = face_mesh.process(rgb)
@@ -435,7 +462,7 @@ def analyze_image():
                 lm_pixels[idx] = (int(lm.x * w), int(lm.y * h))
             
             face_shape = classify_face_shape(lm_pixels)
-            skin_tone = classify_skin_tone(image, lm_pixels)
+            skin_tone, undertone = classify_skin_tone(image, lm_pixels)
 
     # =====================================================
     # 🟢 PART 2: OUTFIT DETECTION (YOLO MODULE)
@@ -445,7 +472,7 @@ def analyze_image():
     # =====================================================
     # 🟠 PART 4: STYLING RECOMMENDATIONS
     # =====================================================
-    styling_info = get_styling_recommendations(body_type, face_shape, skin_tone)
+    styling_info = get_styling_recommendations(body_type, face_shape, skin_tone, undertone)
 
 
     # ---------------- FINAL RESPONSE ----------------
@@ -453,6 +480,7 @@ def analyze_image():
         "body_type": body_type,
         "face_shape": face_shape,
         "skin_tone": skin_tone,
+        "undertone": undertone,
         "logic_used": logic_used,
         "confidence_score": confidence,
         "measurements": {

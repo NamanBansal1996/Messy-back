@@ -109,6 +109,7 @@ import os
 import cv2
 import base64
 from ultralytics import YOLO
+from color_utils import get_dominant_color
 
 # =====================================================
 # 🔹 LOAD TRAINED YOLO MODEL (best.pt)
@@ -217,11 +218,18 @@ def detect_outfits(image):
         _, buffer = cv2.imencode(".jpg", crop)
         crop_b64 = base64.b64encode(buffer).decode("utf-8")
 
+        # =================================================
+        # 🔹 EXTRACT DOMINANT COLOR
+        # =================================================
+        dominant_hex, dominant_hue = get_dominant_color(crop)
+
         outfits[category].append({
             "label": label,
             "confidence": round(float(box.conf[0]), 2),
             "image": crop_b64,
-            "saved_path": save_path
+            "saved_path": save_path,
+            "dominant_hex": dominant_hex,
+            "dominant_hue": dominant_hue
         })
 
     return outfits

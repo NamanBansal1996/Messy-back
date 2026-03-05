@@ -1,4 +1,4 @@
-def get_styling_recommendations(body_type, face_shape, skin_tone):
+def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neutral"):
     """
     Generates styling recommendations based on user attributes.
     """
@@ -76,37 +76,52 @@ def get_styling_recommendations(body_type, face_shape, skin_tone):
         }
     }
 
-    SKIN_TONE_RULES = {
-        "Fair": {
-            "best_colors": ["Emerald Green", "Navy Blue", "Royal Blue", "Burgundy", "Berry", "Black"],
-            "neutrals": ["Charcoal", "Silver", "Taupe"],
-            "avoid": ["Pale pastels (can wash out)", "Bright yellow"]
-        },
-        "Medium": {
-            "best_colors": ["Mustard", "Warm Green", "Teal", "Coral", "Bronze", "Gold"],
-            "neutrals": ["Beige", "Cream", "Tan"],
-            "avoid": ["Icy blues", "Silver"]
-        },
-        "Dark": {
-            "best_colors": ["Cobalt Blue", "Fuchsia", "Bright Yellow", "Red", "Orange", "White"],
-            "neutrals": ["Black", "Gunmetal", "Copper"],
-            "avoid": ["Browns (if too close to skin tone)", "Navy (if too dark)"]
-        }
-    }
+    # ---------------- HUB-BAND FILTERING SYSTEM ----------------
     
-    # ---------------- LOGIC ----------------
+    # Mathematical Hue Bands (0-360) for HSV color space
+    WARM_BAND = [
+        (0, 50, "Red/Rust/Coral/Orange"),
+        (40, 80, "Mustard/Gold/Yellow"),
+        (80, 150, "Olive/Warm Green")
+    ]
+    COOL_BAND = [
+        (180, 240, "Navy/Royal/Blue"),
+        (140, 180, "Emerald/Teal/Cool Green"),
+        (260, 320, "Purple/Plum")
+    ]
+    NEUTRAL_BAND = [
+        (0, 30, "Soft Red"), 
+        (70, 130, "Muted Green"), 
+        (200, 250, "Classic Blue")
+    ]
     
-    # Defaults
+    # Select the allowed color palette based primarily on Undertone
+    if undertone == "Warm":
+        best_colors = [item[2] for item in WARM_BAND]
+        neutrals = ["Camel", "Tan", "Olive", "Warm Brown", "Cream"]
+    elif undertone == "Cool":
+        best_colors = [item[2] for item in COOL_BAND]
+        neutrals = ["Charcoal", "Navy", "Silver", "Stark White", "Cool Gray"]
+    else:
+        best_colors = [item[2] for item in NEUTRAL_BAND]
+        neutrals = ["Beige", "Taupe", "Off-White", "Charcoal"]
+        
+    # We still use skin_tone (light/medium/deep) to adjust contrast/intensity
+    if skin_tone == "Fair":
+        avoid_colors = ["Pale pastels (can wash out)", "Harsh Neon"]
+    elif skin_tone == "Dark":
+        avoid_colors = ["Browns (if too close to skin)", "Muddy tones"]
+    else:
+        avoid_colors = ["Icy blues", "Silver (if too harsh)"]
+        
+    # Defaults from original logic
     b_rec = BODY_RULES.get(body_type, BODY_RULES["rectangle"])
     f_rec = FACE_RULES.get(face_shape, FACE_RULES["Oval"])
-    s_rec = SKIN_TONE_RULES.get(skin_tone, SKIN_TONE_RULES["Medium"])
-    
+
     # Construct Visual Prompt
-    # E.g. "A fashionable outfit featuring a red blouse and bootcut jeans...",
-    
     top_choice = b_rec["tops"][0]
     bottom_choice = b_rec["bottoms"][0]
-    color_choice = s_rec["best_colors"][0]
+    color_choice = best_colors[0] if best_colors else "Neutral"
     
     visual_prompt = f"A photorealistic fashion shot of a person with {body_type} body type and {skin_tone} skin tone wearing a {color_choice} {top_choice} and {bottom_choice}, high quality, editorial lighting"
 
@@ -123,8 +138,9 @@ def get_styling_recommendations(body_type, face_shape, skin_tone):
             "accessories": f_rec.get("accessories", [])
         },
         "color_palette": {
-            "best_colors": s_rec["best_colors"],
-            "neutrals": s_rec["neutrals"]
+            "best_colors": best_colors,
+            "neutrals": neutrals,
+            "avoid": avoid_colors
         },
         "visual_prompt": visual_prompt
     }
