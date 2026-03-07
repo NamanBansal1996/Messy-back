@@ -1,166 +1,3 @@
-#
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# import cv2
-# import os
-# import base64
-# import mediapipe as mp
-# import math
-# from werkzeug.utils import secure_filename
-# from ultralytics import YOLO
-#
-# # ---------------- APP SETUP ----------------
-# app = Flask(__name__)
-# CORS(app, resources={r"/analyze": {"origins": "*"}})
-#
-# UPLOAD_FOLDER = "temp_uploads"
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-# app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-#
-# mp_pose = mp.solutions.pose
-# yolo_model = YOLO("yolov8n.pt")
-#
-# # ---------------- UTILS ----------------
-# def euclidean_distance(p1, p2):
-#     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-#
-# # ---------------- BODY SHAPE CLASSIFIER ----------------
-# def classify_body_type(shoulder_ratio, waist_ratio, highhip_waist_ratio):
-#
-#     if abs(shoulder_ratio - 1.0) <= 0.08 and waist_ratio <= 0.75:
-#         return "hourglass", "Balanced shoulders & hips with narrow waist", 0.90
-#
-#     elif shoulder_ratio < 0.90 and waist_ratio <= 0.78:
-#         return "triangle", "Hips wider than shoulders", 0.85
-#
-#     elif shoulder_ratio > 1.20 and waist_ratio <= 0.78:
-#         return "inverted_triangle", "Shoulders wider than hips", 0.85
-#
-#     elif waist_ratio > 0.85:
-#         return "apple", "Waist not well defined", 0.75
-#
-#     else:
-#         return "rectangle", "Measurements fairly balanced", 0.70
-#
-#
-# # ---------------- OUTFIT CATEGORIES ----------------
-# TOP = set()
-# BOTTOM = set()
-# ACCESSORIES = {"handbag", "tie", "backpack"}
-#
-# def categorize(label):
-#     if label in TOP:
-#         return "top"
-#     elif label in BOTTOM:
-#         return "bottom"
-#     elif label in ACCESSORIES:
-#         return "accessories"
-#     return "unknown"
-#
-#
-# # ---------------- API ----------------
-# @app.route("/analyze", methods=["POST"])
-# def analyze_image():
-#
-#     if "image" not in request.files:
-#         return jsonify({"error": "No image uploaded"}), 400
-#
-#     image_file = request.files["image"]
-#     filename = secure_filename(image_file.filename)
-#     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-#     image_file.save(filepath)
-#
-#     image = cv2.imread(filepath)
-#     if image is None:
-#         return jsonify({"error": "Invalid image"}), 400
-#
-#     # =====================================================
-#     # 🔵 PART 1: BODY TYPE (IMPROVED)
-#     # =====================================================
-#     with mp_pose.Pose(static_image_mode=True) as pose:
-#         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#         results = pose.process(rgb)
-#
-#         if not results.pose_landmarks:
-#             return jsonify({"error": "No person detected"}), 400
-#
-#         h, w, _ = image.shape
-#         lm = results.pose_landmarks.landmark
-#
-#         def coord(idx):
-#             return int(lm[idx].x * w), int(lm[idx].y * h)
-#
-#         ls = coord(mp_pose.PoseLandmark.LEFT_SHOULDER.value)
-#         rs = coord(mp_pose.PoseLandmark.RIGHT_SHOULDER.value)
-#         lh = coord(mp_pose.PoseLandmark.LEFT_HIP.value)
-#         rh = coord(mp_pose.PoseLandmark.RIGHT_HIP.value)
-#
-#         # Waist estimation (midpoint between shoulders & hips)
-#         wl = (
-#             int((ls[0] + lh[0]) / 2),
-#             int((ls[1] + lh[1]) / 2)
-#         )
-#         wr = (
-#             int((rs[0] + rh[0]) / 2),
-#             int((rs[1] + rh[1]) / 2)
-#         )
-#
-#         shoulder_width = euclidean_distance(ls, rs)
-#         hip_width = euclidean_distance(lh, rh)
-#         waist_width = euclidean_distance(wl, wr)
-#
-#         shoulder_ratio = shoulder_width / hip_width
-#         waist_ratio = waist_width / shoulder_width
-#         highhip_waist_ratio = hip_width / waist_width
-#
-#         body_type, logic_used, confidence = classify_body_type(
-#             shoulder_ratio,
-#             waist_ratio,
-#             highhip_waist_ratio
-#         )
-#
-#     # =====================================================
-#     # 🟢 PART 2: OUTFIT DETECTION (UNCHANGED)
-#     # =====================================================
-#     yolo_results = yolo_model(image)
-#
-#     outfits = {"top": [], "bottom": [], "accessories": []}
-#
-#     for box in yolo_results[0].boxes:
-#         cls_id = int(box.cls[0])
-#         label = yolo_results[0].names[cls_id].lower()
-#
-#         category = categorize(label)
-#         if category == "unknown":
-#             continue
-#
-#         x1, y1, x2, y2 = map(int, box.xyxy[0])
-#         cropped = image[y1:y2, x1:x2]
-#
-#         _, buffer = cv2.imencode(".jpg", cropped)
-#         crop_b64 = base64.b64encode(buffer).decode("utf-8")
-#
-#         outfits[category].append({
-#             "label": label,
-#             "image": crop_b64
-#         })
-#
-#     # ---------------- FINAL RESPONSE ----------------
-#     return jsonify({
-#         "body_type": body_type,
-#         "logic_used": logic_used,
-#         "confidence_score": confidence,
-#         "measurements": {
-#             "shoulder_ratio": round(shoulder_ratio, 2),
-#             "waist_ratio": round(waist_ratio, 2),
-#             "highhip_waist_ratio": round(highhip_waist_ratio, 2)
-#         },
-#         "outfits": outfits
-#     })
-#
-#
-# if __name__ == "__main__":
-#     app.run(debug=True)
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -171,16 +8,10 @@ import mediapipe as mp
 import math
 from werkzeug.utils import secure_filename
 import numpy as np
-import copy
 
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
-from styling_rules import get_styling_recommendations
-
-# ---------------- MEDIA PIPE SETUP ----------------
-mp_face_mesh = mp.solutions.face_mesh
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
+from closet_manager import add_items_to_closet, get_user_closet
 
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
@@ -191,6 +22,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 mp_pose = mp.solutions.pose
+mp_face_mesh = mp.solutions.face_mesh
 
 # ---------------- UTILS ----------------
 def euclidean_distance(p1, p2):
@@ -213,7 +45,6 @@ def classify_body_type(shoulder_ratio, waist_ratio, highhip_waist_ratio):
 
     else:
         return "rectangle", "Measurements fairly balanced", 0.70
-
 
 
 # ---------------- FACE SHAPE CLASSIFIER ----------------
@@ -351,105 +182,37 @@ def analyze_image():
         lh = coord(mp_pose.PoseLandmark.LEFT_HIP.value)
         rh = coord(mp_pose.PoseLandmark.RIGHT_HIP.value)
 
-        # ---------------- TORSO SCANNING (IMPROVED ACCURACY) ----------------
-        # Scan multiple points between shoulders and hips to find:
-        # 1. True Waist (narrowest point)
-        # 2. Stomach/Belly (widest point)
-        
-        num_points = 10
-        min_width = float('inf')  # Becomes True Waist
-        max_width = 0             # Becomes Stomach/Belly
-        
-        # We need normalized coordinates for scanning to handle perspective
-        # But we'll use pixel distances for the final ratios
-        
-        for i in range(num_points + 1):
-            t = i / num_points
-            # Interpolate left side point
-            lx = int(ls[0] * (1 - t) + lh[0] * t)
-            ly = int(ls[1] * (1 - t) + lh[1] * t)
-            
-            # Interpolate right side point
-            rx = int(rs[0] * (1 - t) + rh[0] * t)
-            ry = int(rs[1] * (1 - t) + rh[1] * t)
-            
-            # Calculate width at this level
-            current_width = euclidean_distance((lx, ly), (rx, ry))
-            
-            if current_width < min_width:
-                min_width = current_width
-            
-            if current_width > max_width:
-                max_width = current_width
+        wl = (
+            int((ls[0] + lh[0]) / 2),
+            int((ls[1] + lh[1]) / 2)
+        )
+        wr = (
+            int((rs[0] + rh[0]) / 2),
+            int((rs[1] + rh[1]) / 2)
+        )
 
-        waist_width = min_width      # The narrowest point is the waist
-        stomach_width = max_width    # The widest point might be the stomach (for Apple)
-
-        # Calculate base widths
         shoulder_width = euclidean_distance(ls, rs)
         hip_width = euclidean_distance(lh, rh)
+        waist_width = euclidean_distance(wl, wr)
 
-        # Re-calculate ratios with new measurements
         shoulder_ratio = shoulder_width / hip_width
         waist_ratio = waist_width / shoulder_width
-        stomach_ratio = stomach_width / hip_width
-        highhip_waist_ratio = hip_width / waist_width # Added back for compatibility
+        highhip_waist_ratio = hip_width / waist_width
 
-        # Enhanced Classification Logic
-        body_type = "rectangle" # Default
-        confidence = 0.75
-        logic_used = "Standard Ratios"
-
-        # Apple Detection (High Stomach Width)
-        if stomach_ratio > 1.05 and waist_ratio > 0.85:
-             # Stomach dominates
-             body_type = "apple"
-             confidence = 0.85
-             logic_used = "Torso Scan Detected Wide Midsection"
-        
-        # Hourglass (Strong Waist Definition)
-        elif abs(shoulder_ratio - 1.0) <= 0.1 and waist_ratio <= 0.75:
-             body_type = "hourglass"
-             confidence = 0.90
-             logic_used = "Torso Scan Detected Narrow Waist"
-             
-        # Triangle (Hips > Shoulders)
-        elif shoulder_ratio < 0.90:
-             # Check if it's truly triangle or just pear-shaped hourglass
-             if waist_ratio < 0.75:
-                 body_type = "hourglass" # Bottom-heavy hourglass
-                 logic_used = "Definition: Curvy Hips"
-             else:
-                 body_type = "triangle"
-                 confidence = 0.85
-                 logic_used = "Shoulder/Hip Ratio"
-        
-        # Inverted Triangle (Shoulders > Hips)
-        elif shoulder_ratio > 1.15:
-             body_type = "inverted_triangle"
-             confidence = 0.85
-             logic_used = "Broad Shoulders"
-             
-        # Rectangle (Balanced, no defined waist)
-        else:
-             if waist_ratio > 0.82:
-                 body_type = "rectangle"
-                 confidence = 0.80
-                 logic_used = "Balanced Measurements"
-             else:
-                 # Slight curve but not full hourglass
-                 body_type = "hourglass"
-                 confidence = 0.70
-                 logic_used = "Moderate Curves"
+        body_type, logic_used, confidence = classify_body_type(
+            shoulder_ratio,
+            waist_ratio,
+            highhip_waist_ratio
+        )
 
     # =====================================================
-    # 🟣 PART 3: FACE & SKIN ANALYSIS
+    # 🟣 PART 2: FACE & SKIN ANALYSIS
     # =====================================================
     face_shape = "Unknown"
     skin_tone = "Unknown"
     undertone = "Unknown"
 
-    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1) as face_mesh:
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.2) as face_mesh:
         results_face = face_mesh.process(rgb)
         
         if results_face.multi_face_landmarks:
@@ -465,15 +228,25 @@ def analyze_image():
             skin_tone, undertone = classify_skin_tone(image, lm_pixels)
 
     # =====================================================
-    # 🟢 PART 2: OUTFIT DETECTION (YOLO MODULE)
+    # 🟢 PART 3: OUTFIT DETECTION (YOLO MODULE)
     # =====================================================
     outfits = detect_outfits(image)
 
     # =====================================================
-    # 🟠 PART 4: STYLING RECOMMENDATIONS
+    # 🟣 PART 3: SAVE DETECTED CLOTHES TO CLOSET
     # =====================================================
-    styling_info = get_styling_recommendations(body_type, face_shape, skin_tone, undertone)
-
+    user_id = "guest_user"
+    added_count, duplicate_count = add_items_to_closet(user_id, outfits)
+    
+    message = ""
+    if added_count > 0:
+        message = f"Added {added_count} new item(s) to closet."
+        if duplicate_count > 0:
+            message += f" ({duplicate_count} duplicates skipped)."
+    elif duplicate_count > 0:
+        message = f"No new items added. ({duplicate_count} already in closet)."
+    else:
+        message = "No valid clothing items detected to save."
 
     # ---------------- FINAL RESPONSE ----------------
     return jsonify({
@@ -489,8 +262,18 @@ def analyze_image():
             "highhip_waist_ratio": round(highhip_waist_ratio, 2)
         },
         "outfits": outfits,
-        "styling": styling_info
+        "closet_info": {
+            "saved": added_count > 0,
+            "added_count": added_count,
+            "duplicate_count": duplicate_count,
+            "message": message
+        }
     })
+
+@app.route("/closet/<user_id>", methods=["GET"])
+def get_closet(user_id):
+    items = get_user_closet(user_id)
+    return jsonify({"user_id": user_id, "closet": items})
 
 
 if __name__ == "__main__":
