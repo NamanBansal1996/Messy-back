@@ -1,0 +1,369 @@
+{
+    "body_rules": {
+        "inverted_triangle": {
+            "rules": [
+                {
+                    "condition": {
+                        "bottom_type": "jeans"
+                    },
+                    "suggestion": {
+                        "action": "replace",
+                        "target": "bottom",
+                        "options": [
+                            "straight_jeans",
+                            "wide_leg_jeans"
+                        ],
+                        "reason": "Adds volume to lower body and balances shoulders"
+                    },
+                    "priority": 1
+                },
+                {
+                    "condition": {
+                        "top_color_type": "bright"
+                    },
+                    "suggestion": {
+                        "action": "adjust_color",
+                        "target": "top",
+                        "options": [
+                            "dark",
+                            "muted"
+                        ],
+                        "reason": "Reduces attention on upper body"
+                    },
+                    "priority": 2
+                },
+                {
+                    "condition": {},
+                    "suggestion": {
+                        "action": "prefer",
+                        "target": "bottom",
+                        "options": [
+                            "wide_leg_pants",
+                            "full_skirts",
+                            "cargo_pants"
+                        ],
+                        "reason": "Creates balanced silhouette"
+                    },
+                    "priority": 3
+                }
+            ]
+        },
+        "triangle": {
+            "rules": [
+                {
+                    "condition": {
+                        "bottom_type": "jeans"
+                    },
+                    "suggestion": {
+                        "action": "adjust_color",
+                        "target": "bottom",
+                        "options": [
+                            "dark",
+                            "muted"
+                        ],
+                        "reason": "Reduces focus on lower body"
+                    },
+                    "priority": 1
+                },
+                {
+                    "condition": {},
+                    "suggestion": {
+                        "action": "prefer",
+                        "target": "top",
+                        "options": [
+                            "boat_neck",
+                            "cowl_neck",
+                            "ruffled_sleeves"
+                        ],
+                        "reason": "Adds volume to upper body"
+                    },
+                    "priority": 2
+                }
+            ]
+        },
+        "hourglass": {
+            "rules": [
+                {
+                    "condition": {},
+                    "suggestion": {
+                        "action": "highlight",
+                        "target": "waist",
+                        "options": [
+                            "belts",
+                            "fitted_tops",
+                            "wrap_dresses"
+                        ],
+                        "reason": "Enhances natural curves"
+                    },
+                    "priority": 1
+                },
+                {
+                    "condition": {
+                        "outfit_fit": "oversized"
+                    },
+                    "suggestion": {
+                        "action": "avoid",
+                        "target": "outfit",
+                        "options": [
+                            "boxy_tunics",
+                            "shapeless_clothes"
+                        ],
+                        "reason": "Hides natural body shape"
+                    },
+                    "priority": 2
+                }
+            ]
+        },
+        "rectangle": {
+            "rules": [
+                {
+                    "condition": {},
+                    "suggestion": {
+                        "action": "add",
+                        "target": "structure",
+                        "options": [
+                            "belts",
+                            "ruched_dresses",
+                            "layering"
+                        ],
+                        "reason": "Creates illusion of curves"
+                    },
+                    "priority": 1
+                },
+                {
+                    "condition": {
+                        "full_outfit_color": "single_neutral"
+                    },
+                    "suggestion": {
+                        "action": "add_contrast",
+                        "target": "outfit",
+                        "options": [
+                            "color_blocking"
+                        ],
+                        "reason": "Breaks straight body line"
+                    },
+                    "priority": 2
+                }
+            ]
+        },
+        "apple": {
+            "rules": [
+                {
+                    "condition": {},
+                    "suggestion": {
+                        "action": "prefer",
+                        "target": "top",
+                        "options": [
+                            "empire_waist",
+                            "v_neck",
+                            "flowy_tops"
+                        ],
+                        "reason": "Draws attention away from midsection"
+                    },
+                    "priority": 1
+                },
+                {
+                    "condition": {
+                        "waist_emphasis": true
+                    },
+                    "suggestion": {
+                        "action": "avoid",
+                        "target": "waist",
+                        "options": [
+                            "tight_belts",
+                            "clingy_fabrics"
+                        ],
+                        "reason": "Highlights midsection"
+                    },
+                    "priority": 2
+                }
+            ]
+        }
+    },
+    "color_rules": [
+        {
+            "condition": {
+                "top_color_type": "vibrant"
+            },
+            "suggestion": {
+                "action": "balance",
+                "target": "bottom",
+                "options": [
+                    "neutral",
+                    "dark"
+                ],
+                "reason": "Balances strong colors"
+            },
+            "priority": 1
+        },
+        {
+            "condition": {
+                "top_color_type": "pastel"
+            },
+            "suggestion": {
+                "action": "match",
+                "target": "bottom",
+                "options": [
+                    "pastel"
+                ],
+                "reason": "Maintains soft aesthetic"
+            },
+            "priority": 2
+        },
+        {
+            "condition": {
+                "color_family_group": [
+                    "Blue",
+                    "Purple",
+                    "Pink"
+                ]
+            },
+            "suggestion": {
+                "action": "match_palette",
+                "target": "outfit",
+                "options": [
+                    "analogous"
+                ],
+                "reason": "Creates smooth color harmony"
+            },
+            "priority": 3
+        },
+        {
+            "condition": {
+                "color_contrast": "low"
+            },
+            "suggestion": {
+                "action": "add_contrast",
+                "target": "outfit",
+                "options": [
+                    "complementary_colors"
+                ],
+                "reason": "Improves visual interest"
+            },
+            "priority": 4
+        }
+    ],
+    "face_rules": {
+        "Round": {
+            "suggestions": {
+                "necklines": [
+                    "v_neck",
+                    "scoop",
+                    "sweetheart"
+                ],
+                "accessories": [
+                    "long_earrings",
+                    "rectangular_sunglasses"
+                ],
+                "hair": [
+                    "side_part",
+                    "long_layers"
+                ]
+            }
+        },
+        "Oval": {
+            "suggestions": {
+                "necklines": [
+                    "any"
+                ],
+                "accessories": [
+                    "studs",
+                    "hoops"
+                ],
+                "hair": [
+                    "bob",
+                    "waves"
+                ]
+            }
+        },
+        "Square": {
+            "suggestions": {
+                "necklines": [
+                    "round",
+                    "scoop",
+                    "cowl"
+                ],
+                "accessories": [
+                    "hoop_earrings",
+                    "round_sunglasses"
+                ],
+                "hair": [
+                    "soft_waves",
+                    "side_swept_bangs"
+                ]
+            }
+        },
+        "Heart": {
+            "suggestions": {
+                "necklines": [
+                    "boat_neck",
+                    "off_shoulder",
+                    "sweetheart"
+                ],
+                "accessories": [
+                    "chandelier_earrings",
+                    "aviator_sunglasses"
+                ],
+                "hair": [
+                    "chin_length_bob",
+                    "side_part",
+                    "pixie_cut"
+                ]
+            }
+        },
+        "Diamond": {
+            "suggestions": {
+                "necklines": [
+                    "v_neck",
+                    "deep_scoop",
+                    "strapless"
+                ],
+                "accessories": [
+                    "studs",
+                    "oversized_sunglasses",
+                    "hoops"
+                ],
+                "hair": [
+                    "short_layers",
+                    "fringes",
+                    "up_dos"
+                ]
+            }
+        },
+        "Triangle": {
+            "suggestions": {
+                "necklines": [
+                    "boat_neck",
+                    "scoop",
+                    "cowl"
+                ],
+                "accessories": [
+                    "layered_necklaces",
+                    "cat_eye_sunglasses"
+                ],
+                "hair": [
+                    "long_layers",
+                    "top_knots"
+                ]
+            }
+        },
+        "Oblong": {
+            "suggestions": {
+                "necklines": [
+                    "boat_neck",
+                    "turtle_neck",
+                    "short_necklaces"
+                ],
+                "accessories": [
+                    "studs",
+                    "large_sunglasses"
+                ],
+                "hair": [
+                    "bangs",
+                    "chin_length_bobs",
+                    "waves"
+                ]
+            }
+        }
+    }
+}

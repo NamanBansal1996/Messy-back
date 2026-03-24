@@ -221,7 +221,7 @@ def detect_outfits(image):
         # =================================================
         # 🔹 EXTRACT DOMINANT COLOR
         # =================================================
-        dominant_hex, dominant_hue = get_dominant_color(crop)
+        dominant_hex, dominant_hue, color_name = get_dominant_color(crop)
 
         outfits[category].append({
             "label": label,
@@ -229,7 +229,8 @@ def detect_outfits(image):
             "image": crop_b64,
             "saved_path": save_path,
             "dominant_hex": dominant_hex,
-            "dominant_hue": dominant_hue
+            "dominant_hue": dominant_hue,
+            "color_name": color_name
         })
 
     return outfits

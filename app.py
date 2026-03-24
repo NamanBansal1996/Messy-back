@@ -12,6 +12,7 @@ import numpy as np
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
 from closet_manager import add_items_to_closet, get_user_closet
+from styling_rules import get_styling_recommendations
 
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
@@ -248,6 +249,23 @@ def analyze_image():
     else:
         message = "No valid clothing items detected to save."
 
+    # =====================================================
+    # 🟣 PART 4: GENERATE STYLING RECOMMENDATIONS
+    # =====================================================
+    detected_colors = []
+    for category_items in outfits.values():
+        for item in category_items:
+            if "color_name" in item:
+                detected_colors.append(item["color_name"])
+
+    styling_recommendations = get_styling_recommendations(
+        body_type=body_type,
+        face_shape=face_shape,
+        skin_tone=skin_tone,
+        undertone=undertone,
+        outfits=outfits
+    )
+
     # ---------------- FINAL RESPONSE ----------------
     return jsonify({
         "body_type": body_type,
@@ -262,6 +280,7 @@ def analyze_image():
             "highhip_waist_ratio": round(highhip_waist_ratio, 2)
         },
         "outfits": outfits,
+        "styling_recommendations": styling_recommendations,
         "closet_info": {
             "saved": added_count > 0,
             "added_count": added_count,

@@ -70,4 +70,61 @@ def get_dominant_color(image_crop):
     # OpenCV Hue is 0-179. Standard Hue is 0-360.
     true_hue = int(dominant_hsv[0] * 2)
     
-    return hex_color, true_hue
+    color_name = get_color_name(dominant_hsv)
+    
+    return hex_color, true_hue, color_name
+
+def get_color_name(hsv_array):
+    """
+    Given an OpenCV HSV array ([H, S, V] where H: 0-179, S: 0-255, V: 0-255),
+    returns a simple, human-readable color name.
+    """
+    h, s, v = hsv_array[0], hsv_array[1], hsv_array[2]
+    
+    hue_deg = h * 2  # 0 to 360
+    sat_pct = (s / 255.0) * 100
+    val_pct = (v / 255.0) * 100
+    
+    if val_pct < 15:
+        return "Black"
+    if val_pct > 85 and sat_pct < 15:
+        return "White"
+    if sat_pct < 20:
+        if val_pct < 40: return "Dark Gray"
+        if val_pct < 70: return "Gray"
+        return "Light Gray"
+        
+    # Brown/Beige check (Oranges with low sat/val)
+    if 10 <= hue_deg <= 45:
+        if sat_pct < 40 and val_pct > 60:
+            return "Beige"
+        if val_pct < 60:
+            return "Brown"
+            
+    # Standard Colors 
+    if hue_deg < 10 or hue_deg >= 345:
+        if val_pct < 50: return "Burgundy"
+        if sat_pct < 50 and val_pct > 70: return "Pink"
+        return "Red"
+    elif hue_deg < 45:
+        return "Orange"
+    elif hue_deg < 65:
+        if val_pct < 60: return "Olive Green"
+        return "Yellow"
+    elif hue_deg < 150:
+        if val_pct < 50: return "Dark Green"
+        if sat_pct < 40 and val_pct > 70: return "Mint Green"
+        return "Green"
+    elif hue_deg < 200:
+        return "Light Blue"
+    elif hue_deg < 255:
+        if val_pct < 50: return "Navy Blue"
+        return "Blue"
+    elif hue_deg < 290:
+        return "Purple"
+    elif hue_deg < 345:
+        if val_pct < 50: return "Dark Pink"
+        if sat_pct < 40 and val_pct > 70: return "Light Pink"
+        return "Pink"
+
+    return "Unknown"
