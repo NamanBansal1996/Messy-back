@@ -30,7 +30,10 @@ def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 # ---------------- BODY SHAPE CLASSIFIER ----------------
-def classify_body_type(shoulder_ratio, waist_ratio, highhip_waist_ratio):
+def classify_body_type(shoulder_ratio, waist_ratio, highhip_waist_ratio, gender="Female"):
+
+    # Standard male build in a suit can easily hit 1.40 due to shoulder pads. Require strict 1.50.
+    inv_tri_thresh = 1.50 if gender.lower() == "male" else 1.20
 
     if abs(shoulder_ratio - 1.0) <= 0.08 and waist_ratio <= 0.75:
         return "hourglass", "Balanced shoulders & hips with narrow waist", 0.90
@@ -38,7 +41,7 @@ def classify_body_type(shoulder_ratio, waist_ratio, highhip_waist_ratio):
     elif shoulder_ratio < 0.90 and waist_ratio <= 0.78:
         return "triangle", "Hips wider than shoulders", 0.85
 
-    elif shoulder_ratio > 1.20 and waist_ratio <= 0.78:
+    elif shoulder_ratio > inv_tri_thresh and waist_ratio <= 0.78:
         return "inverted_triangle", "Shoulders wider than hips", 0.85
 
     elif waist_ratio > 0.85:
@@ -153,6 +156,8 @@ def analyze_image():
     if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
 
+    gender = request.form.get("gender", "Female")
+
     image_file = request.files["image"]
     filename = secure_filename(image_file.filename)
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
@@ -203,7 +208,8 @@ def analyze_image():
         body_type, logic_used, confidence = classify_body_type(
             shoulder_ratio,
             waist_ratio,
-            highhip_waist_ratio
+            highhip_waist_ratio,
+            gender
         )
 
     # =====================================================
@@ -263,7 +269,8 @@ def analyze_image():
         face_shape=face_shape,
         skin_tone=skin_tone,
         undertone=undertone,
-        outfits=outfits
+        outfits=outfits,
+        gender=gender
     )
 
     # ---------------- FINAL RESPONSE ----------------
@@ -272,6 +279,7 @@ def analyze_image():
         "face_shape": face_shape,
         "skin_tone": skin_tone,
         "undertone": undertone,
+        "gender": gender,
         "logic_used": logic_used,
         "confidence_score": confidence,
         "measurements": {

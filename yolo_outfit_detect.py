@@ -195,6 +195,17 @@ def detect_outfits(image):
             continue
 
         x1, y1, x2, y2 = map(int, box.xyxy[0])
+        
+        # Add 15% padding to improve normal size display in closet
+        box_w, box_h = x2 - x1, y2 - y1
+        pad_x, pad_y = int(box_w * 0.15), int(box_h * 0.15)
+        
+        img_h, img_w, _ = image.shape
+        x1 = max(0, x1 - pad_x)
+        y1 = max(0, y1 - pad_y)
+        x2 = min(img_w, x2 + pad_x)
+        y2 = min(img_h, y2 + pad_y)
+        
         crop = image[y1:y2, x1:x2]
 
         if crop.size == 0:

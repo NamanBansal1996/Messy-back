@@ -22,12 +22,15 @@ def _get_color_family(color_name):
     if "yellow" in c or "mustard" in c: return "yellow"
     return "neutral"
 
-def evaluate_condition(condition, outfits):
+def evaluate_condition(condition, outfits, gender="Unisex"):
     if not condition:
         return True # Empty condition always applies
         
     for key, value in condition.items():
-        if key == "bottom_type":
+        if key == "gender":
+            if value.lower() != "unisex" and value.lower() != gender.lower():
+                return False
+        elif key == "bottom_type":
             bottoms = outfits.get("bottom", [])
             has_type = any(value.lower() in b.get("label", "").lower() for b in bottoms)
             if not has_type: return False
@@ -55,7 +58,7 @@ def evaluate_condition(condition, outfits):
             
     return True
 
-def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neutral", outfits=None):
+def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neutral", outfits=None, gender="Female"):
     """
     Evaluates dynamic rules from styling_database.json based on current outfits.
     """
@@ -77,24 +80,27 @@ def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neu
     
     body_rules = styling_db.get("body_rules", {}).get(body_key, {}).get("rules", [])
     for rule in body_rules:
-        if evaluate_condition(rule.get("condition", {}), outfits):
+        if evaluate_condition(rule.get("condition", {}), outfits, gender):
             actionable_suggestions.append(rule.get("suggestion"))
             
     # 2. Evaluate Color Rules
     color_rules = styling_db.get("color_rules", [])
     for rule in color_rules:
-        if evaluate_condition(rule.get("condition", {}), outfits):
+        if evaluate_condition(rule.get("condition", {}), outfits, gender):
             actionable_suggestions.append(rule.get("suggestion"))
             
-    # Sort by priority
-    # Note: the rules in the JSON already have 'priority', but my suggestion dict itself doesn't. 
-    # Just return them in the order they matched (we can assume the JSON is ordered intentionally by priority).
+    # Limit suggestions to top 2 so we don't overwhelm the user
+    actionable_suggestions = actionable_suggestions[:2]
             
-    # 3. Get Face Rules
+    # 3. Get Face Rules based on Gender
     face_key = face_shape.capitalize() if face_shape else "Oval"
-    face_rules = styling_db.get("face_rules", {}).get(face_key, {}).get("suggestions", {})
+    face_rules = styling_db.get("face_rules", {}).get(face_key, {})
+    
+    # Get the specific gender rules ("Female" or "Male"). Fallback to female "suggestions" if missing (legacy)
+    gender_key = gender.capitalize() if gender else "Female"
+    gendered_face_rules = face_rules.get(gender_key, face_rules.get("suggestions", {}))
 
     return {
         "actionable_suggestions": actionable_suggestions,
-        "face_recommendations": face_rules
+        "face_recommendations": gendered_face_rules
     }

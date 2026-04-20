@@ -25,9 +25,9 @@ def get_dominant_color(image_crop):
     # - Value > 95 (for 0-100 scale, but OpenCV V is 0-255. So V > 240)
     
     # OpenCV HSV scales: H: 0-179, S: 0-255, V: 0-255
-    min_sat = int(255 * (15 / 100)) # ~38
-    min_val = int(255 * (20 / 100)) # ~51
-    max_val = int(255 * (95 / 100)) # ~242
+    min_sat = int(255 * (5 / 100)) # Lowered to 5% to keep gray/white clothing
+    min_val = int(255 * (10 / 100)) # Lowered to 10% to keep dark gray/black clothing
+    max_val = int(255 * (98 / 100)) # Raised to 98% to keep bright white clothing
     
     # Create a boolean mask of "good" pixels
     mask = (pixels_hsv[:, 1] > min_sat) & (pixels_hsv[:, 2] > min_val) & (pixels_hsv[:, 2] < max_val)
@@ -89,9 +89,9 @@ def get_color_name(hsv_array):
         return "Black"
     if val_pct > 85 and sat_pct < 15:
         return "White"
-    if sat_pct < 20:
-        if val_pct < 40: return "Dark Gray"
-        if val_pct < 70: return "Gray"
+    if sat_pct < 35:
+        if val_pct < 45: return "Dark Gray"
+        if val_pct < 75: return "Gray"
         return "Light Gray"
         
     # Brown/Beige check (Oranges with low sat/val)
