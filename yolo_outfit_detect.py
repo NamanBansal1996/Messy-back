@@ -110,6 +110,7 @@ import cv2
 import base64
 from ultralytics import YOLO
 from color_utils import get_dominant_color
+from segformer_parser import mask_out_skin_and_bg
 
 # =====================================================
 # 🔹 LOAD TRAINED YOLO MODEL (best.pt)
@@ -172,7 +173,10 @@ def detect_outfits(image):
     image: OpenCV image (numpy array)
     return: dict with detected outfit categories + cropped images
     """
+    # 1. Generate full transparent RGBA image of only the clothes
+    image_rgba = mask_out_skin_and_bg(image)
 
+    # 2. Get bounding boxes from original image using YOLO
     results = model(image)[0]
 
     outfits = {
@@ -206,33 +210,36 @@ def detect_outfits(image):
         x2 = min(img_w, x2 + pad_x)
         y2 = min(img_h, y2 + pad_y)
         
-        crop = image[y1:y2, x1:x2]
+        # We crop using the RGBA image so it natively drops skin and background
+        crop_rgba = image_rgba[y1:y2, x1:x2]
+        crop_bgr = image[y1:y2, x1:x2]
 
-        if crop.size == 0:
+        if crop_rgba.size == 0:
             continue
 
         # =================================================
         # 🔹 SAVE CROPPED IMAGE TO DIGITAL WARDROBE
         # =================================================
         timestamp = int(time.time() * 1000)
-        filename = f"{label}_{timestamp}.jpg"
+        filename = f"{label}_{timestamp}.png"
 
         category_dir = os.path.join(WARDROBE_DIR, category)
         os.makedirs(category_dir, exist_ok=True)
 
         save_path = os.path.join(category_dir, filename)
-        cv2.imwrite(save_path, crop)
+        cv2.imwrite(save_path, crop_rgba)
 
         # =================================================
         # 🔹 BASE64 FOR FRONTEND PREVIEW
         # =================================================
-        _, buffer = cv2.imencode(".jpg", crop)
+        _, buffer = cv2.imencode(".png", crop_rgba)
         crop_b64 = base64.b64encode(buffer).decode("utf-8")
 
         # =================================================
         # 🔹 EXTRACT DOMINANT COLOR
+        # Note: We pass crop_bgr so color extraction isn't affected by RGBA black alpha layer
         # =================================================
-        dominant_hex, dominant_hue, color_name = get_dominant_color(crop)
+        dominant_hex, dominant_hue, color_name = get_dominant_color(crop_bgr)
 
         outfits[category].append({
             "label": label,
