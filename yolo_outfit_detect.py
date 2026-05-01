@@ -116,7 +116,7 @@ from segformer_parser import mask_out_skin_and_bg
 # 🔹 LOAD TRAINED YOLO MODEL (best.pt)
 # =====================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
+MODEL_PATH = os.path.join(BASE_DIR, "yolov8n.pt")
 
 model = YOLO(MODEL_PATH)
 
