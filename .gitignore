@@ -1,4 +1,24 @@
+venv/
+venv_new/
 .venv/
+.venv310/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Model weights (AI files)
+*.pt
+
+# Project-specific folders
+v1-yolov8/
+models/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store.venv/
 .venv310/
 venv/
 __pycache__/
