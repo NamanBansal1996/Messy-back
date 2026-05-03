@@ -27,7 +27,7 @@ joblib==1.5.3
 kiwisolver==1.4.8
 MarkupSafe==3.0.2
 matplotlib==3.10.3
-mediapipe==0.11.0
+mediapipe==0.10.35
 ml_dtypes==0.5.1
 mpmath==1.3.0
 networkx==3.4.2
