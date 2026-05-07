@@ -15,8 +15,12 @@ from styling_rules import get_styling_recommendations
 
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
-CORS(app, resources={r"/analyze": {"origins": "*"}})
-
+# CORS(app, resources={r"/analyze": {"origins": "*"}})
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    supports_credentials=True
+)
 UPLOAD_FOLDER = "temp_uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
