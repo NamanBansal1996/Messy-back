@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import cv2
@@ -150,6 +149,11 @@ def classify_skin_tone(image, landmarks):
     return skin_tone, undertone
 
 # ---------------- API ----------------
+@app.route("/")
+def home():
+    return "Backend is running successfully"
+
+    
 @app.route("/analyze", methods=["POST"])
 def analyze_image():
 
