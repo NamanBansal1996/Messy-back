@@ -16,6 +16,7 @@ from styling_rules import get_styling_recommendations
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
 # CORS(app, resources={r"/analyze": {"origins": "*"}})
+# CORS(app, origins=["https://messy-taupe.vercel.app"])
 CORS(
     app,
     resources={r"/*": {"origins": "*"}},
@@ -158,7 +159,7 @@ def home():
     return "Backend is running successfully"
 
     
-@app.route("/analyze", methods=["POST"])
+@app.route("/analyze", methods=["POST","GET"])
 def analyze_image():
 
     if "image" not in request.files:
@@ -306,6 +307,7 @@ def analyze_image():
     })
 
 @app.route("/closet/<user_id>", methods=["GET"])
+
 def get_closet(user_id):
     items = get_user_closet(user_id)
     return jsonify({"user_id": user_id, "closet": items})
