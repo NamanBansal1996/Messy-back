@@ -35,24 +35,27 @@ def euclidean_distance(p1, p2):
 
 # ---------------- BODY SHAPE CLASSIFIER ----------------
 def classify_body_type(shoulder_ratio, waist_ratio, highhip_waist_ratio, gender="Female"):
+    # Note: MediaPipe tracks internal skeletal joints. Because hip joints (femur heads) 
+    # sit far inside the pelvis, skeletal shoulder_ratio is naturally high (~1.5 to 1.9).
+    
+    inv_tri_thresh = 1.85 if gender.lower() == "male" else 1.75
+    triangle_thresh = 1.45
+    waist_pinch = 0.82
 
-    # Standard male build in a suit can easily hit 1.40 due to shoulder pads. Require strict 1.50.
-    inv_tri_thresh = 1.50 if gender.lower() == "male" else 1.20
+    if triangle_thresh <= shoulder_ratio <= inv_tri_thresh and waist_ratio <= waist_pinch:
+        return "hourglass", "Balanced skeletal shoulders & hips with narrow waist", 0.90
 
-    if abs(shoulder_ratio - 1.0) <= 0.08 and waist_ratio <= 0.75:
-        return "hourglass", "Balanced shoulders & hips with narrow waist", 0.90
+    elif shoulder_ratio < triangle_thresh:
+        return "triangle", "Hips wider than shoulders (skeletally)", 0.85
 
-    elif shoulder_ratio < 0.90 and waist_ratio <= 0.78:
-        return "triangle", "Hips wider than shoulders", 0.85
-
-    elif shoulder_ratio > inv_tri_thresh and waist_ratio <= 0.78:
-        return "inverted_triangle", "Shoulders wider than hips", 0.85
+    elif shoulder_ratio > inv_tri_thresh and waist_ratio <= waist_pinch:
+        return "inverted_triangle", "Shoulders significantly wider than hips", 0.85
 
     elif waist_ratio > 0.85:
         return "apple", "Waist not well defined", 0.75
 
     else:
-        return "rectangle", "Measurements fairly balanced", 0.70
+        return "rectangle", "Measurements fairly balanced linearly", 0.70
 
 
 # ---------------- FACE SHAPE CLASSIFIER ----------------
