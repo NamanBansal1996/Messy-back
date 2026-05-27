@@ -248,7 +248,13 @@ def detect_outfits(image):
             "saved_path": save_path,
             "dominant_hex": dominant_hex,
             "dominant_hue": dominant_hue,
-            "color_name": color_name
+            "color_name": color_name,
+            "bounding_box": {
+                "x_pct": (x1 / img_w) * 100,
+                "y_pct": (y1 / img_h) * 100,
+                "w_pct": ((x2 - x1) / img_w) * 100,
+                "h_pct": ((y2 - y1) / img_h) * 100
+            }
         })
 
     return outfits
