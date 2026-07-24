@@ -1,0 +1,93 @@
+[
+  {
+    "id": "levis-mens-jeans",
+    "category": "bottom",
+    "label": "jeans",
+    "dominant_hex": "#2b3a55",
+    "dominant_hue": 220,
+    "color_name": "Navy Blue",
+    "gender": "Male",
+    "source": "catalog",
+    "source_ref": "/levis-mensjeans.webp",
+    "title": "Levi's Men's Jeans",
+    "link": "https://levi.in/collections/sale?utm_source=Google&utm_medium=Sales&utm_campaign=23347430331&utm_content=&utm_term=&gad_source=1&gad_campaignid=23347430082&gbraid=0AAAAABV_QT6t4tY4dO1x1Z-L61q2DulZZ&gclid=Cj0KCQjw-pHPBhCdARIsAHXYWP_eF1GhSipAlTxCQDEnwTSQ0kUGqkhc_c1clqe69-EZ_9dzU7fvwk0aAjDXEALw_wcB"
+  },
+  {
+    "id": "fabindia-green-top",
+    "category": "top",
+    "label": "shirt",
+    "dominant_hex": "#3f6b3a",
+    "dominant_hue": 110,
+    "color_name": "Green",
+    "gender": "Female",
+    "source": "catalog",
+    "source_ref": "/fabindia_greentop_women.avif",
+    "title": "Fabindia Green Top",
+    "link": "https://www.fabindia.com/green-cotton-hand-block-printed-top-20269285?currencyCode=INR&nsbp=true&utm_source=20917556549&utm_medium=6490664030&device=c&gad_source=1&gad_campaignid=20921007742&gbraid=0AAAAADnN-mzyE4sJGj2sJhHX6sU-iIAKD&gclid=CjwKCAjw14zPBhAuEiwAP3-Eb6wz755RxAqSReJtOOrIWj0Enm9CAle0aoud-dERjxCD5CQQSBiv-hoCOdYQAvD_BwE"
+  },
+  {
+    "id": "levis-loose-tshirt",
+    "category": "top",
+    "label": "tshirt",
+    "dominant_hex": "#e8e6e1",
+    "dominant_hue": 0,
+    "color_name": "White",
+    "gender": "Unisex",
+    "source": "catalog",
+    "source_ref": "/menlooset-shirtlevis.webp",
+    "title": "Levi's Loose T-Shirt",
+    "link": "https://levi.in/collections/sale?utm_source=Google&utm_medium=Sales&utm_campaign=23347430331&utm_content=&utm_term=&gad_source=1&gad_campaignid=23347430082&gbraid=0AAAAABV_QT6t4tY4dO1x1Z-L61q2DulZZ&gclid=Cj0KCQjw-pHPBhCdARIsAHXYWP_eF1GhSipAlTxCQDEnwTSQ0kUGqkhc_c1clqe69-EZ_9dzU7fvwk0aAjDXEALw_wcB"
+  },
+  {
+    "id": "femella-brown-skirt",
+    "category": "bottom",
+    "label": "skirt",
+    "dominant_hex": "#6b4a34",
+    "dominant_hue": 25,
+    "color_name": "Brown",
+    "gender": "Female",
+    "source": "catalog",
+    "source_ref": "/femella_brown_skirt.webp",
+    "title": "Femella Brown Skirt",
+    "link": "https://www.femmella.com/collections/amrita-linen-collection-06thapr/products/coffee-brown-cotton-linen-a-line-skirt-fb-7420"
+  },
+  {
+    "id": "levis-mens-blue-jeans",
+    "category": "bottom",
+    "label": "jeans",
+    "dominant_hex": "#33547a",
+    "dominant_hue": 210,
+    "color_name": "Blue",
+    "gender": "Male",
+    "source": "catalog",
+    "source_ref": "/levisbluejeans-mens.webp",
+    "title": "Levi's Men's Blue Jeans",
+    "link": "https://levi.in/collections/sale?utm_source=Google&utm_medium=Sales&utm_campaign=23347430331&utm_content=&utm_term=&gad_source=1&gad_campaignid=23347430082&gbraid=0AAAAABV_QT6t4tY4dO1x1Z-L61q2DulZZ&gclid=Cj0KCQjw-pHPBhCdARIsAHXYWP_eF1GhSipAlTxCQDEnwTSQ0kUGqkhc_c1clqe69-EZ_9dzU7fvwk0aAjDXEALw_wcB"
+  },
+  {
+    "id": "levis-womens-white-top",
+    "category": "top",
+    "label": "shirt",
+    "dominant_hex": "#f2f0eb",
+    "dominant_hue": 0,
+    "color_name": "White",
+    "gender": "Female",
+    "source": "catalog",
+    "source_ref": "/womensleviswhitetop.webp",
+    "title": "Levi's Women's White Top",
+    "link": "https://levi.in/collections/sale?utm_source=Google&utm_medium=Sales&utm_campaign=23347430331&utm_content=&utm_term=&gad_source=1&gad_campaignid=23347430082&gbraid=0AAAAABV_QT6t4tY4dO1x1Z-L61q2DulZZ&gclid=Cj0KCQjw-pHPBhCdARIsAHXYWP_eF1GhSipAlTxCQDEnwTSQ0kUGqkhc_c1clqe69-EZ_9dzU7fvwk0aAjDXEALw_wcB"
+  },
+  {
+    "id": "levis-womens-blue-jeans",
+    "category": "bottom",
+    "label": "jeans",
+    "dominant_hex": "#3a5f8a",
+    "dominant_hue": 212,
+    "color_name": "Blue",
+    "gender": "Female",
+    "source": "catalog",
+    "source_ref": "/womenslevsijeansblue.webp",
+    "title": "Levi's Women's Blue Jeans",
+    "link": "https://levi.in/collections/sale?utm_source=Google&utm_medium=Sales&utm_campaign=23347430331&utm_content=&utm_term=&gad_source=1&gad_campaignid=23347430082&gbraid=0AAAAABV_QT6t4tY4dO1x1Z-L61q2DulZZ&gclid=Cj0KCQjw-pHPBhCdARIsAHXYWP_eF1GhSipAlTxCQDEnwTSQ0kUGqkhc_c1clqe69-EZ_9dzU7fvwk0aAjDXEALw_wcB"
+  }
+]
