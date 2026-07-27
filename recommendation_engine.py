@@ -26,6 +26,24 @@ Reuses, unmodified:
 """
 
 import colorsys
+import hashlib
+
+
+def _garment_id(garment):
+    """
+    Stable identity for a garment regardless of source:
+      - wardrobe items from closet_manager.py already have "image_hash"
+      - catalog items have an explicit "id"
+      - freshly-detected items from THIS request (before they're persisted
+        to the closet) have neither -- derive a stable id from their
+        content so exclusion/dedup logic works the same for all three.
+    """
+    if garment.get("id"):
+        return garment["id"]
+    if garment.get("image_hash"):
+        return garment["image_hash"]
+    basis = f"{garment.get('category')}:{garment.get('label')}:{garment.get('dominant_hex')}"
+    return hashlib.md5(basis.encode("utf-8")).hexdigest()
 
 # ─────────────────────────────────────────────────────────────────────────
 # Tunable weights -- named constants, not magic numbers buried in logic.
@@ -37,6 +55,8 @@ W_FACE = 0.10
 W_UNDERTONE = 0.20
 W_WEATHER = 0.15
 W_COLOR_HARMONY = 0.30
+
+W_RECENCY = 0.15  # bonus for garments detected in THIS request, not pulled from older closet history
 
 MAX_RATIONALE_ITEMS = 4
 
@@ -187,13 +207,24 @@ def _color_name_of(garment):
     )
 
 
-def color_harmony_bonus(hex_a, hex_b):
+def color_harmony_bonus(hex_a, hex_b, prefer_contrast=False):
     """
-    +1.0  complementary pairing (hues roughly opposite)
-    +0.5  tonal/monochrome pairing (hues close together)
-    +1.0  either garment is a neutral (white/gray/black) -- pairs with anything
-    -0.2  hues clash (neither close nor complementary)
-     0.0  can't determine (missing/invalid hex)
+    Default mode (Look A / C -- "best overall" pairing):
+      +1.0  complementary pairing (hues roughly opposite)
+      +0.5  tonal/monochrome pairing (hues close together)
+      +1.0  either garment is a neutral (white/gray/black) -- pairs with anything
+      -0.2  hues clash (neither close nor complementary)
+
+    prefer_contrast=True (Look B -- "Elevated Contrast" archetype):
+      Explicitly seeks complementary pairings over tonal ones, rather than
+      treating both as generically "harmonious." This is what makes Look B
+      a genuine style STRATEGY, not just a different candidate pool with the
+      same scoring preferences as the other two looks.
+      +1.5  complementary pairing (rewarded more than in default mode)
+       0.0  tonal/monochrome pairing (no longer rewarded -- Look B isn't
+            looking for "safe," it's looking for contrast)
+      +0.5  neutral involved (still pairs safely, just not the goal)
+      -0.2  hues clash
     """
     hsv_a = _hex_to_hsv(hex_a)
     hsv_b = _hex_to_hsv(hex_b)
@@ -202,16 +233,27 @@ def color_harmony_bonus(hex_a, hex_b):
 
     h_a, s_a, _ = hsv_a
     h_b, s_b, _ = hsv_b
-
-    if s_a < 0.15 or s_b < 0.15:
-        return 1.0
+    is_neutral = s_a < 0.15 or s_b < 0.15
 
     diff = abs(h_a - h_b) * 360
     diff = min(diff, 360 - diff)
+    is_complementary = 150 <= diff <= 210
+    is_tonal = diff <= 30
 
-    if diff <= 30:
+    if prefer_contrast:
+        if is_complementary:
+            return 1.5
+        if is_neutral:
+            return 0.5
+        if is_tonal:
+            return 0.0
+        return -0.2
+
+    if is_neutral:
+        return 1.0
+    if is_tonal:
         return 0.5
-    if 150 <= diff <= 210:
+    if is_complementary:
         return 1.0
     return -0.2
 
@@ -337,6 +379,9 @@ def score_garment_fit(garment, profile):
     if w_reason:
         rationale.append(w_reason)
 
+    if garment.get("is_current"):
+        score += W_RECENCY
+
     return score, rationale
 
 
@@ -351,24 +396,53 @@ def _group_by_category(items):
     return grouped
 
 
-def _best_candidate(candidates, profile):
-    """candidates: list of garment dicts. Returns (score, garment, rationale) or None."""
+def _best_candidate(candidates, profile, excluded_ids=None):
+    """
+    candidates: list of garment dicts. Returns (score, garment, rationale) or None.
+
+    excluded_ids: garment IDs already used by an earlier look in this same
+    generate_three_looks() call. Filtered out first -- but if that would
+    leave zero candidates (a small wardrobe/catalog genuinely has nothing
+    else in this category), we fall back to the full candidate list rather
+    than returning an empty category. That fallback is intentional and
+    logged, not a silent failure.
+    """
     if not candidates:
         return None
-    scored = [(*score_garment_fit(g, profile), g) for g in candidates]
-    # scored items are (score, rationale, garment) -- resort by score desc
+
+    excluded_ids = excluded_ids or set()
+    filtered = [g for g in candidates if _garment_id(g) not in excluded_ids]
+    pool = filtered if filtered else candidates
+
+    scored = [(*score_garment_fit(g, profile), g) for g in pool]
     scored.sort(key=lambda t: t[0], reverse=True)
     score, rationale, garment = scored[0]
     return score, garment, rationale
 
 
-def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allowed_categories):
+def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allowed_categories,
+                  excluded_ids=None, require_current=False, prefer_contrast=False,
+                  archetype=None, archetype_description=None):
     """
     catalog_allowed_categories: set of categories permitted to pull from the
     catalog. Categories NOT in this set still fall back to catalog if the
     wardrobe has zero items there -- an empty wardrobe slot is not a reason
     to leave a look incomplete.
+
+    excluded_ids: garment IDs already selected by an earlier look in this
+    same request -- prevents Look B/C from silently converging on Look A's
+    picks. This is what actually guarantees diversity, not a side effect of
+    scoring differently.
+
+    require_current: when True (used for Look A), any category where the
+    just-uploaded photo actually detected a garment is LOCKED to that
+    garment -- not just score-favored via the recency bonus, which weather/
+    body/undertone scoring can legitimately outweigh. This is what makes
+    "Look A reflects the photo you just uploaded" a structural guarantee
+    instead of a probabilistic outcome. Categories the photo didn't detect
+    anything in still fall through to normal scoring.
     """
+    excluded_ids = set(excluded_ids or set())
     chosen = {}
     total_score = 0.0
     rationale = []
@@ -376,13 +450,28 @@ def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allo
     total_count = 0
 
     for category in ("top", "bottom", "footwear"):
-        candidates = list(wardrobe_by_cat.get(category, []))
-        wardrobe_empty_here = len(candidates) == 0
+        wardrobe_candidates = wardrobe_by_cat.get(category, [])
+        catalog_candidates = catalog_by_cat.get(category, [])
+        wardrobe_after_exclusion = [g for g in wardrobe_candidates if _garment_id(g) not in excluded_ids]
 
-        if category in catalog_allowed_categories or wardrobe_empty_here:
-            candidates += catalog_by_cat.get(category, [])
+        current_here = [g for g in wardrobe_after_exclusion if g.get("is_current")]
+        if require_current and current_here:
+            # Structural guarantee, not a scoring nudge: if the just-uploaded
+            # photo detected something in this category, use it -- full stop.
+            candidates = current_here
+        elif category in catalog_allowed_categories:
+            candidates = wardrobe_after_exclusion + catalog_candidates
+        elif wardrobe_after_exclusion:
+            candidates = wardrobe_after_exclusion
+        else:
+            # Wardrobe is either empty or every item was already used by an
+            # earlier look -- widen to catalog rather than falling back to
+            # re-picking an already-used wardrobe item. This is the fix for
+            # the residual A==B duplicate: without this branch, a single-item
+            # wardrobe with catalog disallowed had nowhere else to go.
+            candidates = catalog_candidates
 
-        best = _best_candidate(candidates, profile)
+        best = _best_candidate(candidates, profile, excluded_ids)
         if not best:
             continue
 
@@ -393,10 +482,14 @@ def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allo
         total_count += 1
         if garment.get("source") == "wardrobe":
             wardrobe_count += 1
+        print(f"[RECOM_ENGINE] Look {look_id} / {category}: id={_garment_id(garment)} "
+              f"label={garment.get('label')} source={garment.get('source')} score={round(score, 3)}")
 
     # Accessories: wardrobe-only for MVP (no accessory items exist in the
     # catalog seed data today -- Ads.jsx never had any). Up to 2 items.
-    acc_candidates = wardrobe_by_cat.get("accessories", [])
+    acc_candidates = [g for g in wardrobe_by_cat.get("accessories", []) if _garment_id(g) not in excluded_ids]
+    if not acc_candidates:
+        acc_candidates = wardrobe_by_cat.get("accessories", [])
     acc_scored = sorted(
         (score_garment_fit(g, profile) + (g,) for g in acc_candidates),
         key=lambda t: t[0],
@@ -406,16 +499,22 @@ def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allo
 
     if chosen.get("top") and chosen.get("bottom"):
         harmony = color_harmony_bonus(
-            chosen["top"].get("dominant_hex"), chosen["bottom"].get("dominant_hex")
+            chosen["top"].get("dominant_hex"), chosen["bottom"].get("dominant_hex"),
+            prefer_contrast=prefer_contrast,
         )
         total_score += W_COLOR_HARMONY * harmony
         if harmony > 0:
-            rationale.append("Top and bottom colors work well together")
+            rationale.append(
+                "Bold, contrasting color pairing" if prefer_contrast and harmony >= 1.5
+                else "Top and bottom colors work well together"
+            )
 
     wardrobe_ratio = round(wardrobe_count / total_count, 2) if total_count else 0.0
 
     return {
         "look_id": look_id,
+        "archetype": archetype,
+        "archetype_description": archetype_description,
         "top": chosen.get("top"),
         "bottom": chosen.get("bottom"),
         "footwear": chosen.get("footwear"),
@@ -426,37 +525,15 @@ def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allo
     }
 
 
-def _best_catalog_swap_category(wardrobe_by_cat, catalog_by_cat, profile, look_a):
-    """
-    Picks the single category where swapping to a catalog item improves the
-    score the most -- this is what makes Look B a genuine "mix," not an
-    arbitrary variation. Categories where Look A already had to use the
-    catalog (empty wardrobe slot) are skipped since there's nothing to swap.
-    """
-    best_category = None
-    best_delta = 0.0
-
+def _look_garment_ids(look):
+    ids = set()
     for category in ("top", "bottom", "footwear"):
-        current = look_a.get(category)
-        if not current or current.get("source") != "wardrobe":
-            continue  # already catalog, or no pick at all -- nothing to swap
-
-        catalog_candidates = catalog_by_cat.get(category, [])
-        if not catalog_candidates:
-            continue
-
-        current_score, _ = score_garment_fit(current, profile)
-        best_catalog = _best_candidate(catalog_candidates, profile)
-        if not best_catalog:
-            continue
-        catalog_score, _, _ = best_catalog
-
-        delta = catalog_score - current_score
-        if delta > best_delta:
-            best_delta = delta
-            best_category = category
-
-    return best_category
+        g = look.get(category)
+        if g:
+            ids.add(_garment_id(g))
+    for g in look.get("accessories") or []:
+        ids.add(_garment_id(g))
+    return ids
 
 
 def _build_styling_payload(profile, looks):
@@ -495,7 +572,33 @@ def _build_styling_payload(profile, looks):
     }
 
 
-def generate_three_looks(profile, wardrobe_items, catalog_items):
+def _merge_current_and_historical(current_outfit_items, wardrobe_items):
+    """
+    Merges THIS request's freshly-detected garments with the user's broader
+    closet history, with current items taking priority on id collisions and
+    flagged is_current=True so scoring favors them.
+    """
+    merged = {}
+
+    for item in current_outfit_items or []:
+        item = dict(item)
+        item.setdefault("source", "wardrobe")
+        item["is_current"] = True
+        merged[_garment_id(item)] = item
+
+    for item in wardrobe_items or []:
+        gid = _garment_id(item)
+        if gid in merged:
+            continue  # current-request version already wins
+        item = dict(item)
+        item.setdefault("source", "wardrobe")
+        item.setdefault("is_current", False)
+        merged[gid] = item
+
+    return list(merged.values())
+
+
+def generate_three_looks(profile, current_outfit_items, wardrobe_items, catalog_items, request_id=None):
     """
     Main entry point.
 
@@ -507,38 +610,90 @@ def generate_three_looks(profile, wardrobe_items, catalog_items):
         "gender": str,
         "weather": {"temperature_c": float, "condition": str},
     }
-    wardrobe_items: list of garment dicts from closet_manager.get_user_closet()
-    catalog_items:  list of garment dicts from catalog.get_catalog_items(...),
-                     each tagged with "source": "catalog"
+    current_outfit_items: garments detected in THIS /analyze call (flatten
+        the `outfits` dict app.py already builds via detect_outfits() --
+        e.g. [item for items in outfits.values() for item in items]).
+        These are prioritized over older closet history, which is what
+        makes recommendations actually track the photo just uploaded
+        instead of drifting toward whatever scored highest historically.
+    wardrobe_items: the user's full closet from closet_manager.get_user_closet()
+        -- used as supplementary candidates (e.g. for categories the current
+        photo didn't show), never as the dominant signal.
+    catalog_items:  list of garment dicts from catalog.get_catalog_items(...).
+    request_id: optional identifier for log correlation (e.g. the uploaded
+        filename or a request UUID) -- makes it possible to grep logs and
+        confirm each upload really is processed independently.
 
     Returns: {
         "looks": [look_a, look_b, look_c],
         "styling": {...}   # matches SuggestionFlow.jsx's expected shape
     }
     """
-    # Wardrobe items don't carry a "source" field today -- tag them here
-    # rather than modifying closet_manager.py.
-    for item in wardrobe_items or []:
-        item.setdefault("source", "wardrobe")
+    tag = f"[RECOM_ENGINE:{request_id}]" if request_id else "[RECOM_ENGINE]"
 
-    wardrobe_by_cat = _group_by_category(wardrobe_items)
+    owned_items = _merge_current_and_historical(current_outfit_items, wardrobe_items)
+    print(f"{tag} current_items={len(current_outfit_items or [])} "
+          f"historical_items={len(wardrobe_items or [])} "
+          f"merged_unique={len(owned_items)} catalog_items={len(catalog_items or [])}")
+    print(f"{tag} profile: body_type={profile.get('body_type')} undertone={profile.get('undertone')} "
+          f"weather={profile.get('weather')}")
+
+    wardrobe_by_cat = _group_by_category(owned_items)
     catalog_by_cat = _group_by_category(catalog_items)
 
-    look_a = compose_look(
-        "A", wardrobe_by_cat, catalog_by_cat, profile, catalog_allowed_categories=set()
-    )
+    used_ids = set()
 
-    swap_category = _best_catalog_swap_category(wardrobe_by_cat, catalog_by_cat, profile, look_a)
+    # ── Look A: "Smart Casual / Current Focus" ──────────────────────────
+    # Structurally guaranteed to reflect the just-uploaded photo (require_current)
+    # wherever the photo actually detected a garment. Standard (non-contrast)
+    # color scoring -- this look is about "you, styled well," not a bold statement.
+    look_a = compose_look(
+        "A", wardrobe_by_cat, catalog_by_cat, profile,
+        catalog_allowed_categories=set(), excluded_ids=used_ids, require_current=True,
+        archetype="Smart Casual",
+        archetype_description="Styled around what you're already wearing",
+    )
+    used_ids |= _look_garment_ids(look_a)
+
+    # ── Look B: "Elevated Contrast" ──────────────────────────────────────
+    # Full catalog access (not just one swapped category) + contrast-seeking
+    # color scoring. This is a distinct STRATEGY, not just a different pool --
+    # per the review, that's what makes it feel genuinely different, not just
+    # technically non-duplicate.
     look_b = compose_look(
         "B", wardrobe_by_cat, catalog_by_cat, profile,
-        catalog_allowed_categories={swap_category} if swap_category else set(),
+        catalog_allowed_categories={"top", "bottom", "footwear"},
+        excluded_ids=used_ids, prefer_contrast=True,
+        archetype="Elevated Contrast",
+        archetype_description="A bolder pairing with complementary colors and layering",
     )
+    used_ids |= _look_garment_ids(look_b)
 
+    # ── Look C: "Full Style Transformation" ──────────────────────────────
+    # Unconstrained, standard scoring, excludes everything A/B already used --
+    # the "complete fresh outfit" option.
     look_c = compose_look(
         "C", wardrobe_by_cat, catalog_by_cat, profile,
         catalog_allowed_categories={"top", "bottom", "footwear"},
+        excluded_ids=used_ids,
+        archetype="Full Style Transformation",
+        archetype_description="A complete new pairing to try something different",
     )
 
-    styling = _build_styling_payload(profile, [look_a, look_b, look_c])
+    looks = [look_a, look_b, look_c]
 
-    return {"looks": [look_a, look_b, look_c], "styling": styling}
+    # Final diversity check -- log rather than silently trust the exclusion
+    # logic above. If a genuine duplicate still slips through (only possible
+    # when the wardrobe+catalog pool is too small to give every look a
+    # distinct option), we want that visible in the logs, not hidden.
+    signatures = [tuple(sorted(_look_garment_ids(l))) for l in looks]
+    if len(set(signatures)) < len(signatures):
+        print(f"{tag} WARNING: duplicate look(s) detected even after exclusion -- "
+              f"wardrobe+catalog pool is too small to produce 3 distinct looks. "
+              f"signatures={signatures}")
+    else:
+        print(f"{tag} diversity check passed: 3 distinct looks generated")
+
+    styling = _build_styling_payload(profile, looks)
+
+    return {"looks": looks, "styling": styling}

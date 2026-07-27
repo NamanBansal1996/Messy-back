@@ -514,9 +514,12 @@ def analyze_image():
         "weather": weather,
     }
 
+    current_outfit_items = [
+        item for category_items in outfits.values() if isinstance(category_items, list) for item in category_items
+    ]
     wardrobe_items = get_user_closet(user_id)
     catalog_items = get_catalog_items(gender=gender)
-    recommendation = generate_three_looks(profile, wardrobe_items, catalog_items)
+    recommendation = generate_three_looks(profile, current_outfit_items, wardrobe_items, catalog_items, request_id=filename)
 
     # ---------------- FINAL RESPONSE ----------------
     return jsonify({
