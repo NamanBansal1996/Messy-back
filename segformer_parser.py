@@ -25,8 +25,11 @@ CLOTHES_CLASSES = {4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 
 def parse_human(image_bgr):
     """
-    Runs SegFormer human parsing ONCE on a BGR image and returns the raw
-    per-pixel class-id map (same H, W as the input image).
+    Runs SegFormer human parsing ONCE on a BGR image and returns:
+      - label_map: per-pixel class-id map (same H, W as the input image)
+      - confidence_map: per-pixel softmax probability of the winning class,
+        a genuine confidence signal (used e.g. by yolo_outfit_detect.py to
+        score detected garments, instead of a hardcoded/guessed value)
 
     Callers should compute this once per request and reuse it (via the
     label_map params below) instead of calling this repeatedly -- each
@@ -49,7 +52,10 @@ def parse_human(image_bgr):
         align_corners=False,
     )
 
-    return upsampled_logits.argmax(dim=1)[0].numpy()
+    probs = torch.nn.functional.softmax(upsampled_logits, dim=1)
+    label_map = probs.argmax(dim=1)[0].numpy()
+    confidence_map = probs.max(dim=1).values[0].numpy()
+    return label_map, confidence_map
 
 
 def mask_out_skin_and_bg(image_bgr, label_map=None):

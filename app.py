@@ -730,7 +730,11 @@ def classify_skin_tone(image, landmarks, skin_mask=None):
     across different photos. This mitigates but does not remove that limit.
     """
     h, w, _ = image.shape
-    target_landmarks = [234, 454, 10, 152, 6]
+    # 103/332 (upper-forehead, left/right) were added and verified against a
+    # bearded/angled test photo this session: they kept surviving when the
+    # cheek/chin points got correctly excluded by beard detection, giving
+    # more redundancy against both facial-hair occlusion and shadow bias.
+    target_landmarks = [234, 454, 10, 152, 6, 103, 332]
     patch_half = 15
 
     face_region_mask = build_face_region_mask(landmarks, h, w)
@@ -768,15 +772,27 @@ def classify_skin_tone(image, landmarks, skin_mask=None):
 
         patch_lab_means.append(valid.mean(axis=0))
 
-    if not patch_lab_means:
+    if len(patch_lab_means) < 2:
         return "Unknown", "Unknown", 0.0, [
-            "Could not find a clear, unobstructed patch of facial skin - "
-            "try a well-lit frontal photo without hair covering the forehead/cheeks."
+            "Could not find enough clear, unobstructed patches of facial skin (facial hair, "
+            "an extreme angle, or occlusion) -- try a well-lit, front-facing photo."
         ]
 
     patch_lab_means = np.array(patch_lab_means)
-    median_lab = np.median(patch_lab_means, axis=0)
-    l_opencv, a_opencv, b_opencv = median_lab
+
+    # Lightness uses the brightest valid sample (capped, to guard against an
+    # overexposed/blown-out pixel being mistaken for skin) rather than the
+    # median: verified against a real photo where beard detection correctly
+    # excluded most sample points, leaving very few, and the face was angled
+    # toward a light source -- one remaining point landed on the shadowed
+    # side and read L*=32 while another read L*=62 from the same forehead.
+    # A shadowed patch can only read darker than true skin, never lighter,
+    # so the brightest genuine skin sample is the more reliable estimate
+    # under directional/uneven lighting. Hue/undertone (a*, b*) stay on the
+    # median across samples -- shadowing affects lightness far more than hue.
+    L_CAP_OPENCV = 92 * 255.0 / 100.0  # ~234.6, guards against blown-out pixels
+    l_opencv = float(min(np.max(patch_lab_means[:, 0]), L_CAP_OPENCV))
+    a_opencv, b_opencv = np.median(patch_lab_means[:, 1:], axis=0)
 
     l_true = (l_opencv * 100.0) / 255.0
     a_true = a_opencv - 128.0
@@ -841,12 +857,13 @@ def analyze_image():
     # ── Run SegFormer human parsing ONCE and reuse it for body silhouette,
     #    skin sampling, hairline detection, and outfit masking. ──
     try:
-        label_map = parse_human(image)
+        label_map, confidence_map = parse_human(image)
         person_mask = get_person_mask(label_map)
         skin_mask = get_skin_mask(label_map)
         hair_mask = get_hair_mask(label_map)
     except Exception:
         label_map = None
+        confidence_map = None
         person_mask = None
         skin_mask = None
         hair_mask = None
@@ -908,9 +925,9 @@ def analyze_image():
             quality_warnings.append("No face detected; face shape and skin tone are unavailable for this photo.")
 
     # =====================================================
-    # 🟢 PART 3: OUTFIT DETECTION (YOLO MODULE)
+    # 🟢 PART 3: OUTFIT DETECTION (SegFormer garment classes)
     # =====================================================
-    outfits = detect_outfits(image, label_map=label_map)
+    outfits = detect_outfits(image, label_map=label_map, confidence_map=confidence_map)
 
     # =====================================================
     # 🟣 PART 3: SAVE DETECTED CLOTHES TO CLOSET
@@ -988,6 +1005,87 @@ def analyze_image():
             "message": message
         }
     })
+
+
+@app.route("/analyze-face", methods=["POST"])
+def analyze_face_only():
+    """
+    Lean retry endpoint for when /analyze couldn't get a reliable face shape
+    or skin tone from the main photo (no face detected, bad angle, poor
+    lighting, occlusion). Takes a second, dedicated selfie and runs ONLY
+    face-mesh + face-shape + skin-tone -- no body pose, outfit detection,
+    closet saving, or recommendations, since the retry photo may not be a
+    full-body shot at all. Reuses the exact same helpers/functions as
+    /analyze so this can't drift out of sync with the main flow's logic.
+    """
+    if "image" not in request.files:
+        return jsonify({"error": "No image uploaded"}), 400
+
+    image_file = request.files["image"]
+    filename = secure_filename(image_file.filename)
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    image_file.save(filepath)
+
+    image = load_image_exif_safe(filepath)
+    if image is None:
+        return jsonify({"error": "Invalid image"}), 400
+
+    quality_warnings = []
+    exposure_factor, exposure_warning = assess_image_exposure(image)
+    if exposure_warning:
+        quality_warnings.append(exposure_warning)
+
+    try:
+        label_map, confidence_map = parse_human(image)
+        skin_mask = get_skin_mask(label_map)
+        hair_mask = get_hair_mask(label_map)
+    except Exception:
+        skin_mask = None
+        hair_mask = None
+
+    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5) as face_mesh:
+        results_face = face_mesh.process(rgb)
+
+        if not results_face.multi_face_landmarks:
+            quality_warnings.append(
+                "No face detected in this photo either -- try a well-lit, front-facing selfie "
+                "without sunglasses, a hat, or heavy shadow."
+            )
+            return jsonify({
+                "face_shape": "Unknown",
+                "face_shape_confidence": 0.0,
+                "skin_tone": "Unknown",
+                "undertone": "Unknown",
+                "skin_confidence": 0.0,
+                "quality_warnings": quality_warnings,
+            })
+
+        face_landmarks = results_face.multi_face_landmarks[0]
+        h, w, _ = image.shape
+        lm_pixels = {}
+        for idx, lm in enumerate(face_landmarks.landmark):
+            lm_pixels[idx] = (int(lm.x * w), int(lm.y * h))
+
+        face_shape, face_confidence, face_warnings = classify_face_shape(lm_pixels, image, hair_mask=hair_mask)
+        skin_tone, undertone, skin_confidence, skin_warnings = classify_skin_tone(image, lm_pixels, skin_mask=skin_mask)
+
+        face_confidence = float(np.clip(face_confidence * exposure_factor, 0.05, 0.95))
+        skin_confidence = float(np.clip(skin_confidence * exposure_factor, 0.05, 0.95))
+
+        quality_warnings.extend(face_warnings)
+        quality_warnings.extend(skin_warnings)
+
+    return jsonify({
+        "face_shape": face_shape,
+        "face_shape_confidence": face_confidence,
+        "skin_tone": skin_tone,
+        "undertone": undertone,
+        "skin_confidence": skin_confidence,
+        "quality_warnings": quality_warnings,
+    })
+
 
 @app.route("/closet/<user_id>", methods=["GET"])
 

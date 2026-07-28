@@ -449,7 +449,42 @@ def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allo
     wardrobe_count = 0
     total_count = 0
 
-    for category in ("top", "bottom", "footwear"):
+    # A dress is a real, separate garment category (see yolo_outfit_detect.py)
+    # -- it replaces the top+bottom slots entirely rather than pairing with
+    # them. Two cases use it instead of the normal top/bottom loop below:
+    # (1) the just-uploaded photo actually detected a dress (mirrors the
+    #     same require_current structural guarantee used for top/bottom), or
+    # (2) there's simply no top/bottom candidate data anywhere (wardrobe or
+    #     catalog) but dress candidates exist -- better than a look with
+    #     missing garments.
+    dress_wardrobe = [g for g in wardrobe_by_cat.get("dress", []) if _garment_id(g) not in excluded_ids]
+    dress_current = [g for g in dress_wardrobe if g.get("is_current")]
+    dress_catalog = catalog_by_cat.get("dress", []) if "dress" in catalog_allowed_categories else []
+    no_top_bottom_signal = not (
+        wardrobe_by_cat.get("top") or wardrobe_by_cat.get("bottom")
+        or catalog_by_cat.get("top") or catalog_by_cat.get("bottom")
+    )
+    use_dress = bool(require_current and dress_current) or bool(
+        no_top_bottom_signal and (dress_wardrobe or dress_catalog)
+    )
+
+    if use_dress:
+        dress_candidates = dress_current if (require_current and dress_current) else (dress_wardrobe + dress_catalog)
+        best = _best_candidate(dress_candidates, profile, excluded_ids)
+        if best:
+            score, garment, reason = best
+            chosen["dress"] = garment
+            total_score += score
+            rationale.extend(reason)
+            total_count += 1
+            if garment.get("source") == "wardrobe":
+                wardrobe_count += 1
+            print(f"[RECOM_ENGINE] Look {look_id} / dress: id={_garment_id(garment)} "
+                  f"label={garment.get('label')} source={garment.get('source')} score={round(score, 3)}")
+
+    categories_to_fill = ("footwear",) if chosen.get("dress") else ("top", "bottom", "footwear")
+
+    for category in categories_to_fill:
         wardrobe_candidates = wardrobe_by_cat.get(category, [])
         catalog_candidates = catalog_by_cat.get(category, [])
         wardrobe_after_exclusion = [g for g in wardrobe_candidates if _garment_id(g) not in excluded_ids]
@@ -517,6 +552,7 @@ def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allo
         "archetype_description": archetype_description,
         "top": chosen.get("top"),
         "bottom": chosen.get("bottom"),
+        "dress": chosen.get("dress"),
         "footwear": chosen.get("footwear"),
         "accessories": accessories,
         "wardrobe_ratio": wardrobe_ratio,
@@ -527,7 +563,7 @@ def compose_look(look_id, wardrobe_by_cat, catalog_by_cat, profile, catalog_allo
 
 def _look_garment_ids(look):
     ids = set()
-    for category in ("top", "bottom", "footwear"):
+    for category in ("top", "bottom", "dress", "footwear"):
         g = look.get(category)
         if g:
             ids.add(_garment_id(g))
@@ -556,14 +592,21 @@ def _build_styling_payload(profile, looks):
         avoid_colors = []
 
     best_look = max(looks, key=lambda l: l["score"]) if looks else None
-    top_label = best_look["top"]["label"] if best_look and best_look.get("top") else "a top"
-    bottom_label = best_look["bottom"]["label"] if best_look and best_look.get("bottom") else "a bottom"
     gender = (profile.get("gender") or "").lower() or "your"
 
-    visual_prompt = (
-        f"A {gender} look for a {profile.get('body_type', 'balanced')} silhouette "
-        f"with {(undertone or 'neutral').lower()} undertones, pairing {top_label} with {bottom_label}."
-    )
+    if best_look and best_look.get("dress"):
+        dress_label = best_look["dress"]["label"]
+        visual_prompt = (
+            f"A {gender} look for a {profile.get('body_type', 'balanced')} silhouette "
+            f"with {(undertone or 'neutral').lower()} undertones, built around a {dress_label}."
+        )
+    else:
+        top_label = best_look["top"]["label"] if best_look and best_look.get("top") else "a top"
+        bottom_label = best_look["bottom"]["label"] if best_look and best_look.get("bottom") else "a bottom"
+        visual_prompt = (
+            f"A {gender} look for a {profile.get('body_type', 'balanced')} silhouette "
+            f"with {(undertone or 'neutral').lower()} undertones, pairing {top_label} with {bottom_label}."
+        )
 
     return {
         "clothing_recommendations": cuts,
