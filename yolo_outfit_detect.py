@@ -65,13 +65,16 @@ def categorize(label: str):
 # =====================================================
 # 🔹 MAIN FUNCTION CALLED BY app.py
 # =====================================================
-def detect_outfits(image):
+def detect_outfits(image, label_map=None):
     """
     image: OpenCV image (numpy array)
+    label_map: optional precomputed SegFormer parse_human() output, passed in
+        by the caller when it already ran segmentation for this request
+        (avoids running the transformer model twice on the same image).
     return: dict with detected outfit categories + cropped images
     """
     # 1. Generate full transparent RGBA image of only the clothes
-    image_rgba = mask_out_skin_and_bg(image)
+    image_rgba = mask_out_skin_and_bg(image, label_map=label_map)
 
     # 2. Get bounding boxes from original image using YOLO
     results = model(image)[0]
