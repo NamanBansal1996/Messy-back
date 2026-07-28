@@ -3,7 +3,7 @@ import os
 import hashlib
 from datetime import datetime
 
-CLOSET_FILE = "closet_data.json"
+CLOSET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "closet_data.json")
 
 def get_closet_data():
     if not os.path.exists(CLOSET_FILE):
@@ -22,7 +22,7 @@ def generate_image_hash(image_b64):
     """Run MD5 hash on the base64 string to identify duplicates."""
     return hashlib.md5(image_b64.encode('utf-8')).hexdigest()
 
-def add_items_to_closet(user_id, outfits_dict):
+def add_items_to_closet(user_id, outfits_dict, gender="Unisex"):
     """
     Takes the dictionary of detected outfits (tops, bottoms, etc.)
     and adds each individual cropped item to the user's closet.
@@ -59,6 +59,7 @@ def add_items_to_closet(user_id, outfits_dict):
                     new_item = {
                         "category": category,
                         "label": item.get("label", "unknown"),
+                        "gender": gender,
                         "image_hash": img_hash,
                         "image_b64": img_b64,
                         "upload_timestamp": datetime.now().isoformat(),
@@ -73,6 +74,33 @@ def add_items_to_closet(user_id, outfits_dict):
         
     return added_count, duplicate_count
 
-def get_user_closet(user_id):
+def get_user_closet(user_id, gender=None):
     data = get_closet_data()
-    return data.get(user_id, [])
+    user_closet = data.get(user_id, [])
+    if gender:
+        return [item for item in user_closet if item.get("gender") in (gender, "Unisex") or not item.get("gender")]
+    return user_closet
+
+def migrate_closet_items(guest_id, user_id):
+    """
+    Migrates closet items from temporary guest_id to authenticated user_id.
+    """
+    data = get_closet_data()
+    if guest_id not in data or not data[guest_id]:
+        return 0
+
+    if user_id not in data:
+        data[user_id] = []
+
+    existing_hashes = {item.get("image_hash") for item in data[user_id] if item.get("image_hash")}
+    migrated_count = 0
+
+    for item in data[guest_id]:
+        if item.get("image_hash") not in existing_hashes:
+            data[user_id].append(item)
+            migrated_count += 1
+
+    del data[guest_id]
+    save_closet_data(data)
+    return migrated_count
+

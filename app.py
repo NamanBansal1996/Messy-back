@@ -10,7 +10,7 @@ import numpy as np
 
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
-from closet_manager import add_items_to_closet, get_user_closet
+from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_items
 from styling_rules import get_styling_recommendations
 from virtual_tryon import generate_tryon
 from recommendation_engine import generate_three_looks
@@ -472,8 +472,8 @@ def analyze_image():
     # =====================================================
     # 🟣 PART 3: SAVE DETECTED CLOTHES TO CLOSET
     # =====================================================
-    user_id = "guest_user"
-    added_count, duplicate_count = add_items_to_closet(user_id, outfits)
+    user_id = request.form.get("user_id", "guest_user")
+    added_count, duplicate_count = add_items_to_closet(user_id, outfits, gender=gender)
     
     message = ""
     if added_count > 0:
@@ -589,9 +589,11 @@ def tryon_single():
     else:
         return jsonify({
             "success": False,
-            "error": result.get("error", "Virtual try-on failed."),
-            "fallback": True
-        }), 503
+            "fallback_image_b64": result.get("fallback_image_b64"),
+            "error": result.get("error", "Virtual try-on model busy."),
+            "fallback": True,
+            "model_used": result.get("model_used", "Fallback")
+        }), 200
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -629,6 +631,7 @@ def tryon_all_looks():
         results["look_a"] = {
             "success": look_a["success"],
             "image": look_a.get("image_b64"),
+            "fallback_image_b64": look_a.get("fallback_image_b64"),
             "label": "Your Top + New Bottom",
             "model_used": look_a.get("model_used")
         }
@@ -640,6 +643,7 @@ def tryon_all_looks():
         results["look_b"] = {
             "success": look_b["success"],
             "image": look_b.get("image_b64"),
+            "fallback_image_b64": look_b.get("fallback_image_b64"),
             "label": "New Top + Your Bottom",
             "model_used": look_b.get("model_used")
         }
@@ -648,28 +652,48 @@ def tryon_all_looks():
 
     if top_b64 and bottom_b64:
         step1 = generate_tryon(person_b64, top_b64, "upper")
-        if step1["success"]:
-            step2 = generate_tryon(step1["image_b64"], bottom_b64, "lower")
+        step1_img = step1.get("image_b64") or step1.get("fallback_image_b64")
+        if step1_img:
+            step2 = generate_tryon(step1_img, bottom_b64, "lower")
             results["look_c"] = {
                 "success": step2["success"],
                 "image": step2.get("image_b64"),
+                "fallback_image_b64": step2.get("fallback_image_b64") or step1.get("fallback_image_b64"),
                 "label": "Full New Outfit",
                 "model_used": f"{step1.get('model_used')} + {step2.get('model_used')}"
             }
         else:
-            step1b = generate_tryon(person_b64, bottom_b64, "lower")
-            results["look_c"] = {
-                "success": step1b["success"],
-                "image": step1b.get("image_b64"),
-                "label": "Full New Outfit (partial)",
-                "model_used": step1b.get("model_used")
-            }
+            results["look_c"] = {"success": False, "image": None, "label": "Full New Outfit"}
     else:
         results["look_c"] = {"success": False, "image": None, "label": "Full New Outfit"}
 
     return jsonify({
         "success": True,
         "looks": results
+    })
+
+# ──────────────────────────────────────────────────────────────────
+# ROUTE 3: Merge temporary guest session into authenticated user session
+# POST /auth/merge-session
+# ──────────────────────────────────────────────────────────────────
+
+@app.route("/auth/merge-session", methods=["POST", "OPTIONS"])
+def merge_session():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+
+    data = request.json or {}
+    guest_id = data.get("guest_id")
+    user_id = data.get("user_id")
+
+    if not guest_id or not user_id:
+        return jsonify({"error": "guest_id and user_id are required"}), 400
+
+    migrated_count = migrate_closet_items(guest_id, user_id)
+    return jsonify({
+        "success": True,
+        "migrated_items": migrated_count,
+        "message": f"Successfully migrated {migrated_count} items from guest session to user account."
     })
 
 if __name__ == "__main__":

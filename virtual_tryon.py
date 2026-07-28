@@ -4,6 +4,8 @@ import os
 import tempfile
 import traceback
 import requests
+import cv2
+import numpy as np
 
 try:
     from gradio_client import Client, handle_file
@@ -32,6 +34,58 @@ def is_space_alive(space_id="yisol/IDM-VTON"):
         print(f"[HF Space] Status check failed: {e}")
         return False
 
+def create_fallback_overlay(person_image_b64, garment_image_b64, garment_type="upper"):
+    try:
+        person_bytes = base64.b64decode(person_image_b64)
+        person_np = np.frombuffer(person_bytes, dtype=np.uint8)
+        person_img = cv2.imdecode(person_np, cv2.IMREAD_COLOR)
+
+        garment_bytes = base64.b64decode(garment_image_b64)
+        garment_np = np.frombuffer(garment_bytes, dtype=np.uint8)
+        garment_img = cv2.imdecode(garment_np, cv2.IMREAD_UNCHANGED)
+
+        if person_img is None or garment_img is None:
+            return person_image_b64
+
+        h, w, _ = person_img.shape
+
+        if garment_type == "lower":
+            overlay_w = int(w * 0.6)
+            overlay_h = int(h * 0.45)
+            x_offset = int((w - overlay_w) / 2)
+            y_offset = int(h * 0.48)
+        else:
+            overlay_w = int(w * 0.65)
+            overlay_h = int(h * 0.45)
+            x_offset = int((w - overlay_w) / 2)
+            y_offset = int(h * 0.15)
+
+        garment_resized = cv2.resize(garment_img, (overlay_w, overlay_h), interpolation=cv2.INTER_AREA)
+
+        y1, y2 = max(0, y_offset), min(h, y_offset + overlay_h)
+        x1, x2 = max(0, x_offset), min(w, x_offset + overlay_w)
+        gh, gw = y2 - y1, x2 - x1
+
+        if gh <= 0 or gw <= 0:
+            return person_image_b64
+
+        garment_crop = garment_resized[0:gh, 0:gw]
+        result_img = person_img.copy()
+
+        if garment_crop.ndim == 3 and garment_crop.shape[2] == 4:
+            alpha = (garment_crop[:, :, 3] / 255.0)[:, :, np.newaxis]
+            bgr = garment_crop[:, :, 0:3]
+            result_img[y1:y2, x1:x2] = (alpha * bgr + (1.0 - alpha) * result_img[y1:y2, x1:x2]).astype(np.uint8)
+        else:
+            bgr = garment_crop[:, :, 0:3] if garment_crop.ndim == 3 else garment_crop
+            result_img[y1:y2, x1:x2] = cv2.addWeighted(bgr, 0.85, result_img[y1:y2, x1:x2], 0.15, 0)
+
+        _, buffer = cv2.imencode(".jpg", result_img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        return base64.b64encode(buffer).decode("utf-8")
+    except Exception as e:
+        print(f"[FallbackOverlay] Error generating fallback overlay: {e}")
+        return person_image_b64
+
 def try_on_with_idmvton(person_image_b64, garment_image_b64, garment_type="upper"):
     person_path = None
     garment_path = None
@@ -41,7 +95,6 @@ def try_on_with_idmvton(person_image_b64, garment_image_b64, garment_type="upper
         garment_path = base64_to_tempfile(garment_image_b64)
 
         print("[IDM-VTON] Connecting to HF Space...")
-        # Old versions of gradio_client do not support the timeout arg
         client = Client("yisol/IDM-VTON")
 
         print("[IDM-VTON] Sending request...")
@@ -51,7 +104,6 @@ def try_on_with_idmvton(person_image_b64, garment_image_b64, garment_type="upper
             "composite": None
         }
 
-        # Pass POSITIONALLY
         result = client.predict(
             person_dict,
             handle_file(garment_path),
@@ -91,23 +143,19 @@ def try_on_with_idmvton(person_image_b64, garment_image_b64, garment_type="upper
 def generate_tryon(person_image_b64, garment_image_b64, garment_type="upper"):
     print(f"[TryOn] garment_type={garment_type}")
 
-    # Check space before wasting time
-    if not is_space_alive():
-        return {
-            "success": False,
-            "image_b64": None,
-            "model_used": None,
-            "error": "IDM-VTON Space is sleeping or unavailable. Please try again in 1-2 minutes."
-        }
+    if is_space_alive():
+        result, err = try_on_with_idmvton(person_image_b64, garment_image_b64, garment_type)
+        if result:
+            return {"success": True, "image_b64": result, "model_used": "IDM-VTON", "error": None}
+        print(f"[TryOn] IDM-VTON attempt failed: {err}. Generating local overlay fallback...")
+    else:
+        print("[TryOn] IDM-VTON Space is sleeping/unavailable. Generating local overlay fallback...")
 
-    result, err = try_on_with_idmvton(person_image_b64, garment_image_b64, garment_type)
-    if result:
-        return {"success": True, "image_b64": result, "model_used": "IDM-VTON", "error": None}
-
+    fallback_b64 = create_fallback_overlay(person_image_b64, garment_image_b64, garment_type)
     return {
         "success": False,
         "image_b64": None,
-        "model_used": None,
-        "error": err or "Try-on model failed. The space may be overloaded."
+        "fallback_image_b64": fallback_b64,
+        "model_used": "Fallback Overlay",
+        "error": "IDM-VTON model busy or unavailable. Showing preview."
     }
-
