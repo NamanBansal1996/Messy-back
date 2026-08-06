@@ -27,6 +27,8 @@ Reuses, unmodified:
 
 import colorsys
 import hashlib
+import json
+import os
 
 
 def _garment_id(garment):
@@ -62,13 +64,38 @@ MAX_RATIONALE_ITEMS = 4
 
 # ─────────────────────────────────────────────────────────────────────────
 # Undertone color preferences -- the concrete fix for the "computed then
-# discarded" undertone bug flagged in the audit.
+# discarded" undertone bug flagged in the audit. Content lives in
+# styling_data/undertones/<undertone>.json, not here -- this module is a
+# consumer of that styling data, not its owner, same separation already
+# used for body-type content (styling_data/*.json + styling_rules.py).
 # ─────────────────────────────────────────────────────────────────────────
-UNDERTONE_PALETTES = {
-    "Warm": ["Olive", "Mustard", "Brown", "Rust", "Beige"],
-    "Cool": ["Navy", "Navy Blue", "Burgundy", "Emerald", "Purple"],
-    "Neutral": ["Olive", "Navy", "Burgundy", "Emerald", "Brown"],
-}
+_UNDERTONE_STYLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "styling_data", "undertones")
+_undertone_style_cache = {}
+
+
+def _load_undertone_style(undertone):
+    key = (undertone or "").strip().lower()
+    if key not in {"warm", "cool", "neutral"}:
+        key = "neutral"
+    if key in _undertone_style_cache:
+        return _undertone_style_cache[key]
+    path = os.path.join(_UNDERTONE_STYLE_DIR, f"{key}.json")
+    if not os.path.exists(path):
+        return _load_undertone_style("neutral") if key != "neutral" else {}
+    with open(path, "r") as f:
+        data = json.load(f)
+    _undertone_style_cache[key] = data
+    return data
+
+
+def _flatten_ideal_colors(style):
+    """style["ideal_colors"] is grouped by color family (reds, blues, ...) --
+    scoring/display just needs one flat list of names, regardless of family."""
+    ideal_colors = style.get("ideal_colors", {})
+    flat = []
+    for family_colors in ideal_colors.values():
+        flat.extend(family_colors)
+    return flat
 
 # ─────────────────────────────────────────────────────────────────────────
 # Body-shape hints. Two things live here:
@@ -76,9 +103,7 @@ UNDERTONE_PALETTES = {
 #      with the actual label vocabulary the detector can produce today).
 #   2. CUT descriptions, used only for the "styling" text payload sent to
 #      SuggestionFlow.jsx -- these are display strings, not scoring inputs.
-# Covers all 7 body types classify_body_type_v2() can output, including
-# "spoon" and "diamond", which styling_database.json is currently missing
-# (a separate, earlier audit finding -- filled here as a side benefit).
+# Covers all 5 body types classify_body_type_v2() can output.
 # ─────────────────────────────────────────────────────────────────────────
 BODY_SHAPE_LABEL_PREFERENCE = {
     "inverted_triangle": {
@@ -99,14 +124,6 @@ BODY_SHAPE_LABEL_PREFERENCE = {
     },
     "apple": {
         "top": {"prefer": ["dress", "sweater", "long sleeve shirt"], "avoid": ["short sleeve shirt"]},
-        "bottom": {"prefer": [], "avoid": []},
-    },
-    "spoon": {
-        "top": {"prefer": ["jacket", "sweater"], "avoid": []},
-        "bottom": {"prefer": ["trousers"], "avoid": ["skirt"]},
-    },
-    "diamond": {
-        "top": {"prefer": ["shirt", "dress"], "avoid": []},
         "bottom": {"prefer": [], "avoid": []},
     },
 }
@@ -136,16 +153,6 @@ BODY_CUT_HINTS = {
         "tops": ["Flowy V-neck", "Open cardigan"],
         "bottoms": ["Straight-leg trousers"],
         "dresses": ["Empire-waist dress"],
-    },
-    "spoon": {
-        "tops": ["Structured jacket", "V-neck top"],
-        "bottoms": ["Straight-leg trousers"],
-        "dresses": ["Fit-and-flare dress"],
-    },
-    "diamond": {
-        "tops": ["Tailored shirt", "V-neck top"],
-        "bottoms": ["Straight-leg trousers"],
-        "dresses": ["Wrap dress"],
     },
 }
 
@@ -296,7 +303,8 @@ def _face_shape_bonus(garment, face_shape):
 
 
 def _undertone_bonus(garment, undertone):
-    palette = UNDERTONE_PALETTES.get(undertone)
+    style = _load_undertone_style(undertone)
+    palette = _flatten_ideal_colors(style)
     if not palette:
         return 0.0, None
 
@@ -305,15 +313,13 @@ def _undertone_bonus(garment, undertone):
         return 0.0, None
 
     if any(p.lower() in color_name.lower() for p in palette):
-        return 1.0, f"{color_name} complements your {undertone.lower()} undertone"
+        return 1.0, f"{color_name} complements your {(undertone or 'neutral').lower()} undertone"
 
-    opposite = None
-    if undertone == "Warm":
-        opposite = UNDERTONE_PALETTES["Cool"]
-    elif undertone == "Cool":
-        opposite = UNDERTONE_PALETTES["Warm"]
-
-    if opposite and any(p.lower() in color_name.lower() for p in opposite):
+    # Each undertone owns its own avoid list (no cross-file inference).
+    # Warm's avoid_colors is real content; Cool/Neutral are still empty
+    # until equivalent avoid-guidance is supplied for them.
+    avoid = style.get("avoid_colors", [])
+    if avoid and any(p.lower() in color_name.lower() for p in avoid):
         return -0.5, None
 
     return 0.0, None
@@ -583,13 +589,7 @@ def _build_styling_payload(profile, looks):
     cuts = BODY_CUT_HINTS.get(body_key, BODY_CUT_HINTS["rectangle"])
 
     undertone = profile.get("undertone")
-    best_colors = UNDERTONE_PALETTES.get(undertone, UNDERTONE_PALETTES["Neutral"])
-    if undertone == "Warm":
-        avoid_colors = UNDERTONE_PALETTES["Cool"]
-    elif undertone == "Cool":
-        avoid_colors = UNDERTONE_PALETTES["Warm"]
-    else:
-        avoid_colors = []
+    best_colors = _flatten_ideal_colors(_load_undertone_style(undertone))
 
     best_look = max(looks, key=lambda l: l["score"]) if looks else None
     gender = (profile.get("gender") or "").lower() or "your"
@@ -610,7 +610,7 @@ def _build_styling_payload(profile, looks):
 
     return {
         "clothing_recommendations": cuts,
-        "color_palette": {"best_colors": best_colors, "avoid_colors": avoid_colors},
+        "color_palette": {"best_colors": best_colors},
         "visual_prompt": visual_prompt,
     }
 

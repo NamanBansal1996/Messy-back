@@ -63,22 +63,31 @@ def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neu
     Evaluates dynamic rules from styling_database.json based on current outfits.
     """
     if outfits is None: outfits = {}
-    
-    # Load JSON Database
+
+    # Load shared JSON database (color_rules + face_rules -- not body-type-specific)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, "styling_database.json")
-    
+
     with open(db_path, "r") as f:
         styling_db = json.load(f)
 
-    # Convert incoming body type to match JSON keys
-    body_key = body_type.lower()
+    # Convert incoming body type to match the per-body-type file name
+    body_key = body_type.lower().replace(" ", "_")
     if body_key == "pear": body_key = "triangle"
-    
+
+    # Body-type-specific content (rules + style guide) lives in its own file
+    # under styling_data/, one per body type -- keeps future additions (new
+    # garment categories, more body types) to small, isolated file diffs.
+    body_file = os.path.join(base_dir, "styling_data", f"{body_key}.json")
+    body_data = {}
+    if os.path.exists(body_file):
+        with open(body_file, "r") as f:
+            body_data = json.load(f)
+
     # 1. Evaluate Body Rules
     actionable_suggestions = []
-    
-    body_rules = styling_db.get("body_rules", {}).get(body_key, {}).get("rules", [])
+
+    body_rules = body_data.get("rules", [])
     for rule in body_rules:
         if evaluate_condition(rule.get("condition", {}), outfits, gender):
             actionable_suggestions.append(rule.get("suggestion"))
@@ -100,7 +109,11 @@ def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neu
     gender_key = gender.capitalize() if gender else "Female"
     gendered_face_rules = face_rules.get(gender_key, face_rules.get("suggestions", {}))
 
+    # 4. Static reference style guide (Do's/Avoid's per garment category) for this body type + gender
+    style_guide = body_data.get("style_guide", {}).get(gender_key, {})
+
     return {
         "actionable_suggestions": actionable_suggestions,
-        "face_recommendations": gendered_face_rules
+        "face_recommendations": gendered_face_rules,
+        "style_guide": style_guide
     }

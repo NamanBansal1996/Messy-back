@@ -1,0 +1,44 @@
+{
+  "undertone": "cool",
+
+  "description": "Cool undertones have pink, blue, or icy hues. Clothing should lean into cool, icy, or jewel-toned colors rather than warm golden tones.",
+
+  "ideal_colors": {
+    "reds": ["ruby", "bright rosy red"],
+    "pinks": ["blush", "icy pink"],
+    "oranges": [],
+    "yellows": ["pale yellow"],
+    "greens": ["emerald", "mint", "teal"],
+    "blues": ["cobalt", "sapphire", "electric blue"],
+    "purples": ["amethyst", "lavender", "plum"],
+    "browns": [],
+    "neutrals": ["pure white", "dove gray", "charcoal", "cool beige", "cool gray", "navy"]
+  },
+
+  "avoid_colors": [],
+
+  "caution_colors": {},
+
+  "preferred_neutrals": [],
+
+  "better_alternatives": {},
+
+  "metal_recommendations": {},
+
+  "wardrobe_basics": [],
+
+  "seasonal_palette": {},
+
+  "contrast_level": {},
+
+  "styling_rules": {},
+
+  "shopping_priority": {},
+
+  "stylist_notes": [
+    "Bright blues, emeralds, and deep purples make you look great.",
+    "Frosty shades of lavender, ice blue, and pink can light up your face if you have cool-toned skin.",
+    "Ruby, bright rosy red, and pale yellows are great warmer options.",
+    "If you prefer neutrals, cool gray, bright white, and navy will give you a perfect match."
+  ]
+}

@@ -1,160 +1,163 @@
 {
-    "body_rules": {
-        "inverted_triangle": {
-            "rules": [
-                {
-                    "condition": { "gender": "Female" },
-                    "suggestion": {
-                        "title": "Balance the Shoulders",
-                        "body": "Since you have broader shoulders, wearing wide-leg pants or A-line skirts can add beautiful volume to your lower half and create a perfectly balanced silhouette."
-                    },
-                    "priority": 1
-                },
-                {
-                    "condition": { "gender": "Male" },
-                    "suggestion": {
-                        "title": "Enhance the V-Taper",
-                        "body": "Your build naturally emphasizes the shoulders. A well-fitted polo or a structured jacket will comfortably define your waist without looking too tight, while straight or slightly tapered trousers complete the athletic look."
-                    },
-                    "priority": 1
-                }
-            ]
-        },
-        "rectangle": {
-            "rules": [
-                {
-                    "condition": { "gender": "Female" },
-                    "suggestion": {
-                        "title": "Create Natural Curves",
-                        "body": "To add dimension to your balanced shape, try using belts to cinch the waist, or wear layered outfits and ruched dresses to create the illusion of flowing curves."
-                    },
-                    "priority": 1
-                },
-                {
-                    "condition": { "gender": "Male" },
-                    "suggestion": {
-                        "title": "Broaden the Shoulders",
-                        "body": "To add dimension to your straight torso, try layering with structured jackets like blazers or overshirts. A tailored shirt tucked into slim-straight trousers will give you a sharp, defined look."
-                    },
-                    "priority": 1
-                }
-            ]
-        },
-        "hourglass": {
-            "rules": [
-                {
-                    "condition": { "gender": "Female" },
-                    "suggestion": {
-                        "title": "Highlight Your Curves",
-                        "body": "Your perfectly balanced shape looks best when the waist is highlighted. Wrap dresses, belted coats, and fitted tops are your best friends."
-                    },
-                    "priority": 1
-                },
-                {
-                    "condition": { "gender": "Male" },
-                    "suggestion": {
-                        "title": "Athletic Proportions",
-                        "body": "You have a balanced, athletic build. Tailored V-necks, fitted shirts, and structured blazers work exceptionally well to enhance your natural proportions without looking overly constricted."
-                    },
-                    "priority": 1
-                }
-            ]
-        },
-        "triangle": {
-            "rules": [
-                {
-                    "condition": { "gender": "Female" },
-                    "suggestion": {
-                        "title": "Draw the Eyes Upward",
-                        "body": "To balance wider hips, draw attention to your upper body by wearing boat necks, cowl necks, or tops with ruffled details. Pair them with darker, muted bottoms."
-                    },
-                    "priority": 1
-                },
-                {
-                    "condition": { "gender": "Male" },
-                    "suggestion": {
-                        "title": "Balance the Upper Body",
-                        "body": "To create a broader chest profile, try layering jackets or wearing lighter-colored shirts. Dark, straight-leg trousers will keep the lower body looking sharp and tailored."
-                    },
-                    "priority": 1
-                }
-            ]
-        },
-        "apple": {
-            "rules": [
-                {
-                    "condition": {},
-                    "suggestion": {
-                        "title": "Elongate Your Profile",
-                        "body": "Flowy tops, V-necks, and open cardigans are great for elongating your silhouette and drawing attention vertically. Avoid overly tight belts around the midsection."
-                    },
-                    "priority": 1
-                }
-            ]
-        }
+  "color_rules": [
+    {
+      "condition": {
+        "color_family_group": [
+          "Blue",
+          "Navy"
+        ]
+      },
+      "suggestion": {
+        "title": "Color Harmony",
+        "body": "Because you are wearing cool tones like blue, adding a light pink, beige, or crisp white shirt can beautifully enhance the look with soft, stylish contrast."
+      },
+      "priority": 1
     },
-    "color_rules": [
-        {
-            "condition": { "color_family_group": ["Blue", "Navy"] },
-            "suggestion": {
-                "title": "Color Harmony",
-                "body": "Because you are wearing cool tones like blue, adding a light pink, beige, or crisp white shirt can beautifully enhance the look with soft, stylish contrast."
-            },
-            "priority": 1
-        },
-        {
-            "condition": { "color_family_group": ["Brown", "Beige"] },
-            "suggestion": {
-                "title": "Earthy & Elevated",
-                "body": "Your outfit features earthy tones. Consider pairing this with a deep forest green, navy, or cream piece to create a rich and sophisticated color palette."
-            },
-            "priority": 1
-        },
-        {
-            "condition": { "top_color_type": "vibrant" },
-            "suggestion": {
-                "title": "Balance Bright Colors",
-                "body": "Since you're wearing a strong, vibrant color on top, matching it with neutral or dark bottoms (like black or charcoal) will ground the outfit perfectly."
-            },
-            "priority": 2
-        },
-        {
-            "condition": { "color_contrast": "low" },
-            "suggestion": {
-                "title": "Introduce Some Contrast",
-                "body": "Your current outfit relies on very similar shades. Introducing a pop of a complementary color—or even just a white layer underneath—will add visual interest to your look."
-            },
-            "priority": 3
-        }
-    ],
-    "face_rules": {
-        "Round": {
-            "Female": { "necklines": ["V-neck", "Scoop", "Sweetheart"] },
-            "Male": { "necklines": ["V-neck", "Pointed Collar", "Henley"] }
-        },
-        "Oval": {
-            "Female": { "necklines": ["Any neckline works beautifully!"] },
-            "Male": { "necklines": ["Crew neck", "Polo collar", "V-neck", "Turtleneck"] }
-        },
-        "Square": {
-            "Female": { "necklines": ["Round", "Scoop", "Cowl"] },
-            "Male": { "necklines": ["Crew neck", "Polo collar", "Button-down"] }
-        },
-        "Heart": {
-            "Female": { "necklines": ["Boat neck", "Off-shoulder", "Sweetheart"] },
-            "Male": { "necklines": ["Crew neck", "Standard collar", "Zip-neck"] }
-        },
-        "Diamond": {
-            "Female": { "necklines": ["V-neck", "Deep scoop", "Strapless"] },
-            "Male": { "necklines": ["V-neck", "Open collar", "Henley"] }
-        },
-        "Triangle": {
-            "Female": { "necklines": ["Boat neck", "Scoop", "Cowl"] },
-            "Male": { "necklines": ["Crew neck", "Structured collar", "Boat neck top"] }
-        },
-        "Oblong": {
-            "Female": { "necklines": ["Boat neck", "Turtle neck", "High collar"] },
-            "Male": { "necklines": ["Turtleneck", "Crew neck", "Spread collar shirt"] }
-        }
+    {
+      "condition": {
+        "color_family_group": [
+          "Brown",
+          "Beige"
+        ]
+      },
+      "suggestion": {
+        "title": "Earthy & Elevated",
+        "body": "Your outfit features earthy tones. Consider pairing this with a deep forest green, navy, or cream piece to create a rich and sophisticated color palette."
+      },
+      "priority": 1
+    },
+    {
+      "condition": {
+        "top_color_type": "vibrant"
+      },
+      "suggestion": {
+        "title": "Balance Bright Colors",
+        "body": "Since you're wearing a strong, vibrant color on top, matching it with neutral or dark bottoms (like black or charcoal) will ground the outfit perfectly."
+      },
+      "priority": 2
+    },
+    {
+      "condition": {
+        "color_contrast": "low"
+      },
+      "suggestion": {
+        "title": "Introduce Some Contrast",
+        "body": "Your current outfit relies on very similar shades. Introducing a pop of a complementary color\u2014or even just a white layer underneath\u2014will add visual interest to your look."
+      },
+      "priority": 3
     }
+  ],
+  "face_rules": {
+    "Round": {
+      "Female": {
+        "necklines": [
+          "V-neck",
+          "Scoop",
+          "Sweetheart"
+        ]
+      },
+      "Male": {
+        "necklines": [
+          "V-neck",
+          "Pointed Collar",
+          "Henley"
+        ]
+      }
+    },
+    "Oval": {
+      "Female": {
+        "necklines": [
+          "Any neckline works beautifully!"
+        ]
+      },
+      "Male": {
+        "necklines": [
+          "Crew neck",
+          "Polo collar",
+          "V-neck",
+          "Turtleneck"
+        ]
+      }
+    },
+    "Square": {
+      "Female": {
+        "necklines": [
+          "Round",
+          "Scoop",
+          "Cowl"
+        ]
+      },
+      "Male": {
+        "necklines": [
+          "Crew neck",
+          "Polo collar",
+          "Button-down"
+        ]
+      }
+    },
+    "Heart": {
+      "Female": {
+        "necklines": [
+          "Boat neck",
+          "Off-shoulder",
+          "Sweetheart"
+        ]
+      },
+      "Male": {
+        "necklines": [
+          "Crew neck",
+          "Standard collar",
+          "Zip-neck"
+        ]
+      }
+    },
+    "Diamond": {
+      "Female": {
+        "necklines": [
+          "V-neck",
+          "Deep scoop",
+          "Strapless"
+        ]
+      },
+      "Male": {
+        "necklines": [
+          "V-neck",
+          "Open collar",
+          "Henley"
+        ]
+      }
+    },
+    "Triangle": {
+      "Female": {
+        "necklines": [
+          "Boat neck",
+          "Scoop",
+          "Cowl"
+        ]
+      },
+      "Male": {
+        "necklines": [
+          "Crew neck",
+          "Structured collar",
+          "Boat neck top"
+        ]
+      }
+    },
+    "Oblong": {
+      "Female": {
+        "necklines": [
+          "Boat neck",
+          "Turtle neck",
+          "High collar"
+        ]
+      },
+      "Male": {
+        "necklines": [
+          "Turtleneck",
+          "Crew neck",
+          "Spread collar shirt"
+        ]
+      }
+    }
+  }
 }

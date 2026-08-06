@@ -1,0 +1,136 @@
+{
+  "rules": [
+    {
+      "condition": {
+        "gender": "Female"
+      },
+      "suggestion": {
+        "title": "Draw the Eyes Upward",
+        "body": "To balance wider hips, draw attention to your upper body by wearing boat necks, cowl necks, or tops with ruffled details. Pair them with darker, muted bottoms."
+      },
+      "priority": 1
+    },
+    {
+      "condition": {
+        "gender": "Male"
+      },
+      "suggestion": {
+        "title": "Balance the Upper Body",
+        "body": "To create a broader chest profile, try layering jackets or wearing lighter-colored shirts. Dark, straight-leg trousers will keep the lower body looking sharp and tailored."
+      },
+      "priority": 1
+    }
+  ],
+  "style_guide": {
+    "Female": {
+      "characteristics": [
+        "A-shape silhouette",
+        "Medium to small height",
+        "Shoulders are slimmer compared to the hips",
+        "Pronounced waistline",
+        "Delicate bust",
+        "Defined hips that are wider than the shoulders"
+      ],
+      "necklines": {
+        "do": [
+          "Bateau",
+          "Boat",
+          "Cowl",
+          "Off-shoulder",
+          "Heart",
+          "Sabrina",
+          "Sweetheart",
+          "Crew",
+          "Slash",
+          "Turtle"
+        ],
+        "avoid": []
+      },
+      "sleeves": {
+        "do": [
+          "Petal",
+          "Batwing",
+          "Cap",
+          "Tapered",
+          "Flutter",
+          "Juliet"
+        ],
+        "avoid": []
+      },
+      "shirts": {
+        "do": [
+          "Wrap bust",
+          "Slim fit",
+          "Cropped around the hipline",
+          "Tie necks"
+        ],
+        "avoid": []
+      },
+      "tshirts": {
+        "do": [
+          "Petal sleeves",
+          "Bold prints & patterns (especially floral and stripes)",
+          "Details around the shoulder",
+          "Cap sleeves"
+        ],
+        "avoid": []
+      },
+      "tops": {
+        "do": [
+          "Cropped above the waist",
+          "Cropped on the hipline",
+          "Details around the shoulder",
+          "Light colors",
+          "Juliet sleeves",
+          "Cap sleeves",
+          "Petal sleeves"
+        ],
+        "avoid": []
+      },
+      "pants": {
+        "do": [
+          "High-mid rise",
+          "Flare",
+          "Bootcut",
+          "Straight",
+          "Wide-leg"
+        ],
+        "avoid": []
+      },
+      "jeans": {
+        "do": [
+          "Straight",
+          "Bootcut",
+          "Flare leg",
+          "High/mid-rise",
+          "Wide-leg"
+        ],
+        "avoid": []
+      },
+      "skirts": {
+        "do": [
+          "A-line",
+          "Bias",
+          "Tulip",
+          "Straight",
+          "Wrap",
+          "Asymmetrical",
+          "Unlined circle"
+        ],
+        "avoid": []
+      },
+      "dresses": {
+        "do": [
+          "Tulip",
+          "A-line",
+          "X-line",
+          "Empire",
+          "Off-shoulder",
+          "Wrap",
+          "Belted"
+        ],
+        "avoid": []
+      }
+    }
+  }
+}

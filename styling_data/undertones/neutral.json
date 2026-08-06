@@ -1,0 +1,289 @@
+{
+  "undertone": "neutral",
+
+  "description": "Neutral undertones contain a balanced mix of warm and cool pigments. Most colors work well, but choosing shades that match whether the skin leans warm, balanced, or cool produces the most harmonious appearance.",
+
+  "ideal_colors": {
+    "reds": [
+      "balanced red",
+      "muted rose",
+      "watermelon",
+      "terracotta rose",
+      "brick",
+      "berry",
+      "raspberry"
+    ],
+
+    "pinks": [
+      "dusty pink",
+      "muted rose",
+      "soft rose",
+      "watermelon"
+    ],
+
+    "oranges": [
+      "soft coral",
+      "terracotta",
+      "warm coral"
+    ],
+
+    "yellows": [
+      "cornsilk yellow",
+      "soft mustard",
+      "muted gold"
+    ],
+
+    "greens": [
+      "jade",
+      "moss",
+      "olive",
+      "petrol",
+      "medium teal",
+      "warm teal",
+      "pine"
+    ],
+
+    "blues": [
+      "lagoon blue",
+      "medium teal",
+      "denim blue",
+      "slate blue",
+      "classic navy"
+    ],
+
+    "purples": [
+      "aubergine",
+      "plum",
+      "violet",
+      "wine"
+    ],
+
+    "neutrals": [
+      "off white",
+      "soft white",
+      "greige",
+      "light taupe",
+      "coffee",
+      "mid gray",
+      "charcoal",
+      "classic navy",
+      "black"
+    ]
+  },
+
+  "avoid_colors": [
+    "electric blue",
+    "magenta"
+  ],
+
+  "caution_colors": {
+    "highly_saturated": [
+      "neon colors",
+      "fluorescent colors"
+    ],
+
+    "extreme_temperature": [
+      "very icy colors",
+      "very warm orange"
+    ]
+  },
+
+  "preferred_neutrals": [
+    "soft white",
+    "greige",
+    "light taupe",
+    "coffee",
+    "mid gray",
+    "charcoal",
+    "classic navy",
+    "black"
+  ],
+
+  "better_alternatives": {
+    "electric_blue": [
+      "lagoon blue",
+      "denim blue",
+      "slate blue"
+    ],
+
+    "magenta": [
+      "dusty pink",
+      "muted rose",
+      "berry"
+    ]
+  },
+
+  "metal_recommendations": {
+    "recommended": [
+      "yellow gold",
+      "white gold",
+      "silver",
+      "rose gold",
+      "platinum"
+    ],
+
+    "less_flattering": []
+  },
+
+  "wardrobe_basics": [
+    "soft white shirt",
+    "greige trousers",
+    "light taupe chinos",
+    "charcoal blazer",
+    "classic navy jacket",
+    "mid gray sweater",
+    "coffee knit",
+    "black jeans"
+  ],
+
+  "seasonal_palette": {
+    "spring": [
+      "dusty pink",
+      "jade",
+      "cornsilk yellow",
+      "soft coral"
+    ],
+
+    "summer": [
+      "lagoon blue",
+      "medium teal",
+      "soft white",
+      "light taupe"
+    ],
+
+    "autumn": [
+      "terracotta rose",
+      "moss",
+      "coffee",
+      "aubergine"
+    ],
+
+    "winter": [
+      "charcoal",
+      "berry",
+      "plum",
+      "classic navy"
+    ]
+  },
+
+  "subtypes": {
+    "neutral_warm": {
+      "light_neutrals": [
+        "oatmeal",
+        "cream",
+        "warm stone"
+      ],
+
+      "dark_neutrals": [
+        "cocoa",
+        "olive brown",
+        "warm navy"
+      ],
+
+      "best_colors": [
+        "terracotta rose",
+        "coral",
+        "brick",
+        "moss",
+        "petrol",
+        "warm teal",
+        "soft mustard",
+        "aubergine"
+      ]
+    },
+
+    "balanced_neutral": {
+      "light_neutrals": [
+        "soft white",
+        "greige",
+        "light taupe"
+      ],
+
+      "dark_neutrals": [
+        "espresso",
+        "charcoal",
+        "classic navy"
+      ],
+
+      "best_colors": [
+        "muted rose",
+        "watermelon",
+        "balanced red",
+        "jade",
+        "medium teal",
+        "denim",
+        "muted gold",
+        "plum"
+      ]
+    },
+
+    "neutral_cool": {
+      "light_neutrals": [
+        "pearl",
+        "dove gray",
+        "cool beige"
+      ],
+
+      "dark_neutrals": [
+        "blue charcoal",
+        "ink",
+        "cool espresso"
+      ],
+
+      "best_colors": [
+        "berry",
+        "raspberry",
+        "blue red",
+        "blue green",
+        "pine",
+        "slate blue",
+        "violet",
+        "wine"
+      ]
+    }
+  },
+
+  "contrast_level": {
+    "best": [
+      "low",
+      "medium",
+      "medium-high"
+    ],
+
+    "avoid": [
+      "extremely high contrast"
+    ]
+  },
+
+  "styling_rules": {
+    "prefer_balanced_colors": true,
+    "allow_both_warm_and_cool": true,
+    "avoid_extreme_temperature_colors": true,
+    "prefer_muted_over_neon": true,
+    "true_red_is_highly_recommended": true,
+    "adapt_palette_to_neutral_subtype": true
+  },
+
+  "shopping_priority": {
+    "score_bonus": {
+      "ideal_color": 20,
+      "preferred_neutral": 15,
+      "recommended_metal": 5,
+      "matches_neutral_subtype": 10
+    },
+
+    "score_penalty": {
+      "avoid_color": -25,
+      "caution_color": -10
+    }
+  },
+
+  "stylist_notes": [
+    "Neutral undertones can wear both warm and cool colors successfully.",
+    "Muted shades generally look more sophisticated than highly saturated shades.",
+    "True red is one of the most universally flattering colors for neutral undertones.",
+    "Both gold and silver jewelry work well.",
+    "When in doubt, choose balanced colors instead of strongly warm or strongly cool versions.",
+    "Determine whether the wearer leans neutral-warm, balanced-neutral, or neutral-cool for the best recommendations."
+  ]
+}

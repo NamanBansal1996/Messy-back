@@ -1,0 +1,229 @@
+{
+  "undertone": "warm",
+
+  "description": "Warm undertones have golden, peachy or yellow hues. Clothing should enhance warmth instead of creating cool contrast.",
+
+  "ideal_colors": {
+    "reds": [
+      "tomato red",
+      "warm brick red",
+      "rust",
+      "terracotta",
+      "warm burgundy"
+    ],
+    "pinks": [
+      "coral",
+      "salmon",
+      "peach",
+      "warm rose"
+    ],
+    "oranges": [
+      "burnt orange",
+      "pumpkin",
+      "tangerine",
+      "amber",
+      "rust"
+    ],
+    "yellows": [
+      "golden yellow",
+      "marigold",
+      "butter yellow",
+      "warm cream",
+      "saffron"
+    ],
+    "greens": [
+      "olive",
+      "sage",
+      "forest green",
+      "moss green",
+      "warm emerald",
+      "pistachio",
+      "warm teal"
+    ],
+    "blues": [
+      "warm navy",
+      "deep teal",
+      "turquoise"
+    ],
+    "purples": [
+      "orchid",
+      "warm plum"
+    ],
+    "browns": [
+      "chocolate",
+      "camel",
+      "caramel",
+      "cognac",
+      "copper",
+      "bronze",
+      "warm taupe"
+    ],
+    "neutrals": [
+      "cream",
+      "ivory",
+      "warm beige",
+      "camel",
+      "khaki",
+      "greige",
+      "warm grey",
+      "mushroom grey",
+      "cappuccino",
+      "taupe"
+    ]
+  },
+
+  "avoid_colors": [
+    "icy blue",
+    "powder blue",
+    "periwinkle",
+    "sapphire",
+    "amethyst",
+    "cool silver grey",
+    "pure white"
+  ],
+
+  "caution_colors": {
+    "cool_pinks": [
+      "fuchsia",
+      "magenta",
+      "blue-based pink"
+    ],
+    "cool_blues": [
+      "icy blue",
+      "powder blue",
+      "periwinkle"
+    ],
+    "greys": [
+      "silver grey",
+      "cool charcoal"
+    ],
+    "black": [
+      "pure black"
+    ],
+    "white": [
+      "stark white"
+    ]
+  },
+
+  "preferred_neutrals": [
+    "cream",
+    "ivory",
+    "camel",
+    "warm taupe",
+    "warm beige",
+    "warm grey",
+    "greige",
+    "chocolate brown",
+    "dark olive",
+    "warm navy"
+  ],
+
+  "better_alternatives": {
+    "pure_black": [
+      "dark chocolate",
+      "warm navy",
+      "brown charcoal"
+    ],
+    "pure_white": [
+      "cream",
+      "ivory",
+      "off-white"
+    ],
+    "cool_grey": [
+      "greige",
+      "warm charcoal",
+      "warm grey"
+    ]
+  },
+
+  "metal_recommendations": {
+    "recommended": [
+      "yellow gold",
+      "rose gold",
+      "bronze",
+      "copper"
+    ],
+    "less_flattering": [
+      "bright silver",
+      "white gold"
+    ]
+  },
+
+  "wardrobe_basics": [
+    "cream shirt",
+    "ivory t-shirt",
+    "camel trousers",
+    "warm beige chinos",
+    "chocolate blazer",
+    "dark olive jacket",
+    "warm navy jeans",
+    "warm taupe sweater"
+  ],
+
+  "seasonal_palette": {
+    "spring": [
+      "peach",
+      "warm coral",
+      "golden yellow",
+      "sage green"
+    ],
+    "summer": [
+      "warm white",
+      "terracotta",
+      "turquoise",
+      "warm tan"
+    ],
+    "autumn": [
+      "rust",
+      "forest green",
+      "camel",
+      "warm burgundy"
+    ],
+    "winter": [
+      "warm red",
+      "dark chocolate",
+      "bronze",
+      "warm ivory"
+    ]
+  },
+
+  "contrast_level": {
+    "best": [
+      "medium",
+      "medium-high"
+    ],
+    "avoid": [
+      "extremely cool contrast"
+    ]
+  },
+
+  "styling_rules": {
+    "prefer_warm_versions": true,
+    "avoid_blue_based_colors": true,
+    "prefer_earthy_colors": true,
+    "prefer_golden_hues": true,
+    "prefer_muted_or_rich_warm_tones": true,
+    "avoid_highly_icy_colors": true
+  },
+
+  "shopping_priority": {
+    "score_bonus": {
+      "ideal_color": 20,
+      "preferred_neutral": 15,
+      "recommended_metal": 5
+    },
+    "score_penalty": {
+      "avoid_color": -25,
+      "caution_color": -10
+    }
+  },
+
+  "stylist_notes": [
+    "Warm skin looks healthiest in colors containing yellow or orange undertones.",
+    "Earthy colors usually outperform icy or jewel-toned colors.",
+    "Cream is almost always a better choice than pure white.",
+    "Chocolate brown is generally more flattering than pure black.",
+    "Warm metallics like gold and bronze naturally complement warm undertones.",
+    "When choosing between two similar shades, select the warmer version."
+  ]
+}

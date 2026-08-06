@@ -1,0 +1,264 @@
+{
+  "rules": [
+    {
+      "condition": {
+        "gender": "Female"
+      },
+      "suggestion": {
+        "title": "Balance the Shoulders",
+        "body": "Since you have broader shoulders, wearing wide-leg pants or A-line skirts can add beautiful volume to your lower half and create a perfectly balanced silhouette."
+      },
+      "priority": 1
+    },
+    {
+      "condition": {
+        "gender": "Male"
+      },
+      "suggestion": {
+        "title": "Enhance the V-Taper",
+        "body": "Your build naturally emphasizes the shoulders. A well-fitted polo or a structured jacket will comfortably define your waist without looking too tight, while straight or slightly tapered trousers complete the athletic look."
+      },
+      "priority": 1
+    }
+  ],
+  "style_guide": {
+    "Female": {
+      "shirts": {
+        "do": [
+          "Wrap shirts",
+          "Straight-cut shirts",
+          "A-line shirts",
+          "Shirts that flare from the waist",
+          "Longline shirts extending below the hips",
+          "Side-slit shirts",
+          "Hip-layered shirts",
+          "Dark-colored tops",
+          "Collarless or small-collar shirts"
+        ],
+        "avoid": [
+          "Cropped shirts ending at the waist",
+          "Oversized shoulder details",
+          "Epaulettes",
+          "Ruffles on shoulders",
+          "Embellished shoulders",
+          "Horizontal stripes",
+          "Chunky knitwear",
+          "Large collars"
+        ]
+      },
+      "tops": {
+        "do": [
+          "Simple fitted tops",
+          "Wrap tops",
+          "Peplum tops",
+          "Long tops",
+          "Asymmetric tops",
+          "Tops with hip detailing",
+          "Dark-colored tops"
+        ],
+        "avoid": [
+          "Shoulder pads",
+          "Puff sleeves",
+          "Cap sleeves with volume",
+          "Cropped tops",
+          "Heavy chest embellishments",
+          "Bold shoulder prints"
+        ]
+      },
+      "pants": {
+        "do": [
+          "Wide-leg trousers",
+          "Palazzo pants",
+          "Flared trousers",
+          "Bootcut trousers",
+          "Culottes",
+          "Harem pants",
+          "Baggy trousers",
+          "Cargo/Combat pants",
+          "Boyfriend jeans",
+          "Straight-leg trousers",
+          "Cigarette trousers",
+          "Turn-up trousers",
+          "Bright or light-colored bottoms",
+          "Printed bottoms",
+          "Pocket-detailed trousers"
+        ],
+        "avoid": [
+          "Skinny jeans",
+          "Super-slim trousers",
+          "Plain dark trousers",
+          "Simple straight skinny styles without volume"
+        ]
+      },
+      "necklines": {
+        "do": [
+          "Deep V-neck",
+          "Narrow V-neck",
+          "Scoop neck",
+          "Deep U-neck",
+          "Asymmetric neckline",
+          "Halter neck (best for smaller bust)"
+        ],
+        "avoid": [
+          "Off-shoulder",
+          "Bateau (boat neck)",
+          "Square neck",
+          "Sabrina neckline",
+          "Wide necklines"
+        ]
+      },
+      "sleeves": {
+        "do": [
+          "Fitted short sleeves",
+          "Tapered short sleeves",
+          "Raglan sleeves",
+          "Kimono sleeves",
+          "Dolman sleeves",
+          "Soft flared long sleeves",
+          "Shoulder slits",
+          "Cut-out sleeve details",
+          "Dropped shoulders"
+        ],
+        "avoid": [
+          "Puff sleeves",
+          "Shoulder pads",
+          "Gathered sleeves at the shoulders",
+          "Cap sleeves with volume",
+          "Structured shoulder sleeves"
+        ]
+      },
+      "jeans": {
+        "recommended_items": [
+          {
+            "type": "bootcut",
+            "advice": "Bootcut jeans gently flare from the knee down, helping balance broader shoulders by adding subtle volume to the lower leg."
+          },
+          {
+            "type": "wide_leg",
+            "advice": "Wide-leg jeans create balanced proportions by adding width throughout the lower body, making the silhouette appear more even."
+          },
+          {
+            "type": "flared",
+            "advice": "Flared jeans add volume around the lower leg and ankle, helping create a more balanced look for an inverted triangle body shape."
+          },
+          {
+            "type": "boyfriend",
+            "advice": "Boyfriend jeans have a relaxed fit that softens the upper body's visual dominance, especially when paired with fitted tops."
+          },
+          {
+            "type": "straight_leg",
+            "advice": "Straight-leg jeans create a clean, streamlined silhouette that complements an inverted triangle body shape without emphasizing the shoulders."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "skinny",
+            "advice": "Avoid skinny jeans, as they can emphasize the contrast between broader shoulders and narrower hips, making the upper body appear wider."
+          }
+        ],
+        "general_advice": [
+          "Choose mid-rise or high-rise jeans to help define the waist and create a more balanced overall silhouette."
+        ]
+      },
+      "skirts": {
+        "recommended_items": [
+          {
+            "type": "tulip",
+            "advice": "Tulip skirts add soft volume around the hips, helping create a more balanced silhouette for an inverted triangle body shape."
+          },
+          {
+            "type": "box_pleated",
+            "advice": "Box pleated skirts create structure and fullness in the lower body, balancing broader shoulders."
+          },
+          {
+            "type": "a_line",
+            "advice": "A-line skirts gently flare from the waist, creating the illusion of wider hips and a more proportional figure."
+          },
+          {
+            "type": "bias_cut",
+            "advice": "Bias-cut skirts skim the body gracefully while adding subtle movement that enhances balance."
+          },
+          {
+            "type": "layered",
+            "advice": "Layered skirts add visual volume to the lower body, helping offset a broader upper body."
+          },
+          {
+            "type": "ruffled",
+            "advice": "Ruffled skirts introduce texture and fullness around the hips, creating a more balanced appearance."
+          },
+          {
+            "type": "paneled",
+            "advice": "Paneled skirts add shape and structure to the lower body, improving overall proportions."
+          },
+          {
+            "type": "straight",
+            "advice": "Straight skirts create a clean silhouette while maintaining balance when paired with the right top."
+          },
+          {
+            "type": "circle",
+            "advice": "Circle skirts add generous volume and movement, making the lower body appear fuller and more proportional."
+          },
+          {
+            "type": "full",
+            "advice": "Full skirts create volume around the hips and legs, balancing a broader shoulder line."
+          },
+          {
+            "type": "ballerina",
+            "advice": "Ballerina skirts add softness and fullness, drawing attention to the lower half of the body."
+          },
+          {
+            "type": "tiered",
+            "advice": "Tiered skirts create layers and volume that enhance the appearance of the hips and lower body."
+          }
+        ],
+        "general_advice": [
+          "Skirts with extra volume or dropped waistlines help create the illusion of fuller hips and a more balanced silhouette."
+        ]
+      },
+      "dresses": {
+        "recommended_items": [
+          {
+            "type": "wrap",
+            "advice": "Wrap dresses define the waist and create balanced proportions by drawing attention to the body's center."
+          },
+          {
+            "type": "sheath",
+            "advice": "Sheath dresses create a sleek silhouette while highlighting the waist for a balanced look."
+          },
+          {
+            "type": "a_line",
+            "advice": "A-line dresses gently flare from the waist, creating the illusion of fuller hips."
+          },
+          {
+            "type": "one_shoulder",
+            "advice": "One-shoulder dresses break the symmetry of broad shoulders, creating a softer and more balanced appearance."
+          },
+          {
+            "type": "apron",
+            "advice": "Apron dresses add structure while drawing attention toward the waist and lower body."
+          },
+          {
+            "type": "peplum",
+            "advice": "Peplum dresses add volume around the hips, helping balance broader shoulders."
+          },
+          {
+            "type": "fit_and_flare",
+            "advice": "Fit-and-flare dresses emphasize the waist and create fullness in the skirt for a flattering silhouette."
+          },
+          {
+            "type": "shift",
+            "advice": "Shift dresses provide a relaxed silhouette that doesn't overemphasize the upper body."
+          },
+          {
+            "type": "paneled",
+            "advice": "Paneled dresses use strategic seams to create shape and improve body proportions."
+          },
+          {
+            "type": "nipped_waist",
+            "advice": "Dresses with a nipped waist highlight the waistline and create the appearance of balanced curves."
+          }
+        ]
+      }
+    }
+  }
+}

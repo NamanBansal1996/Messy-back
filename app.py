@@ -311,7 +311,7 @@ def classify_body_type_v2(image, pose_landmarks, gender="Female", person_mask=No
     1. Skeleton landmarks for Y positions
     2. SegFormer human-parsing silhouette for actual widths (GrabCut/edge-scan
        as fallback only)
-    3. 7 body type classification, with gender-adjusted thresholds and a
+    3. 5 body type classification, with gender-adjusted thresholds and a
        confidence score computed from measurement margin + pose/segmentation
        quality (not a fixed constant per category)
 
@@ -406,7 +406,7 @@ def classify_body_type_v2(image, pose_landmarks, gender="Female", person_mask=No
     pear_waist_cut       = 0.88 if is_male else 0.85
     apple_cut            = 0.90 if is_male else 0.85
 
-    # ── 7-Type Classification with priority order (unchanged decision structure) ──
+    # ── 5-Type Classification with priority order (unchanged decision structure) ──
     body_type = "Rectangle"
     logic     = ""
     margin    = 0.4
@@ -436,22 +436,6 @@ def classify_body_type_v2(image, pose_landmarks, gender="Female", person_mask=No
         body_type = "Apple"
         logic = "Wide waist relative to hips and shoulders"
         margin = min((waist_to_hip - apple_cut) / (1.0 - apple_cut), (waist_to_shoulder - apple_cut) / (1.0 - apple_cut))
-
-    elif W_high_hip > W_shoulder * 1.05 and waist_to_hip < 0.80:
-        body_type = "Spoon"
-        logic = "High hip wider than shoulders with waist definition"
-        margin = min((W_high_hip / (W_shoulder * 1.05)) - 1, (0.80 - waist_to_hip) / 0.80)
-
-    elif (hip_to_shoulder < 0.95
-              and W_shoulder < W_waist * 1.05
-              and W_hip < W_waist * 1.05):
-        body_type = "Diamond"
-        logic = "Narrow shoulders and hips, widest at waist"
-        margin = min(
-            (0.95 - hip_to_shoulder) / 0.95,
-            (W_waist * 1.05 / W_shoulder) - 1,
-            (W_waist * 1.05 / W_hip) - 1,
-        )
 
     else:
         body_type = "Rectangle"
