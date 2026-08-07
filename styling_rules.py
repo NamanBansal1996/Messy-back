@@ -22,6 +22,55 @@ def _get_color_family(color_name):
     if "yellow" in c or "mustard" in c: return "yellow"
     return "neutral"
 
+def _normalize_type_string(value):
+    if not value:
+        return ""
+    return value.lower().replace("_", " ").replace("-", " ").strip()
+
+
+def _match_current_item_to_style_guide(category_data, outfits):
+    """
+    category_data: a style_guide category dict in the rich format
+    (recommended_items/avoid_items with "type" fields, e.g. inverted_triangle
+    Female's "jeans"). Looks across every detected outfit item for one whose
+    classified subcategory/fit (garment_classifier.py, when available)
+    matches one of this category's item types via normalized substring
+    containment -- same style already used by _get_color_family/
+    _undertone_bonus elsewhere in this codebase, no rigid label-to-category
+    map. Returns a match dict, or None if nothing matched (including when no
+    item was classified at all -- e.g. no ANTHROPIC_API_KEY set).
+    """
+    recommended = category_data.get("recommended_items", [])
+    avoid = category_data.get("avoid_items", [])
+    if not recommended and not avoid:
+        return None
+
+    all_items = []
+    for cat_items in outfits.values():
+        if isinstance(cat_items, list):
+            all_items.extend(cat_items)
+
+    for item in all_items:
+        candidates = [c for c in (
+            _normalize_type_string(item.get("subcategory")),
+            _normalize_type_string(item.get("fit")),
+        ) if c]
+        if not candidates:
+            continue
+
+        for entry in recommended:
+            entry_type = _normalize_type_string(entry.get("type"))
+            if entry_type and any(entry_type in c or c in entry_type for c in candidates):
+                return {"detected_type": entry.get("type"), "verdict": "recommended", "advice": entry.get("advice", "")}
+
+        for entry in avoid:
+            entry_type = _normalize_type_string(entry.get("type"))
+            if entry_type and any(entry_type in c or c in entry_type for c in candidates):
+                return {"detected_type": entry.get("type"), "verdict": "avoid", "advice": entry.get("advice", "")}
+
+    return None
+
+
 def evaluate_condition(condition, outfits, gender="Unisex"):
     if not condition:
         return True # Empty condition always applies
@@ -111,6 +160,19 @@ def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neu
 
     # 4. Static reference style guide (Do's/Avoid's per garment category) for this body type + gender
     style_guide = body_data.get("style_guide", {}).get(gender_key, {})
+
+    # 5. Match the current outfit's classified attributes (garment_classifier.py,
+    # when available) against rich-format style_guide categories -- turns
+    # static reference content into "your bootcut jeans are a great match"
+    # for whichever categories have a detected, classified item.
+    for category_data in style_guide.values():
+        if not isinstance(category_data, dict):
+            continue
+        if "recommended_items" not in category_data and "avoid_items" not in category_data:
+            continue
+        match = _match_current_item_to_style_guide(category_data, outfits)
+        if match:
+            category_data["matched_current_item"] = match
 
     return {
         "actionable_suggestions": actionable_suggestions,

@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # loads .env (git-ignored) before anything below reads env vars, e.g. ANTHROPIC_API_KEY
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import cv2
@@ -11,6 +14,7 @@ import numpy as np
 
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
+from garment_classifier import enrich_outfits_with_attributes
 from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_items
 from styling_rules import get_styling_recommendations
 from virtual_tryon import generate_tryon
@@ -912,6 +916,7 @@ def analyze_image():
     # 🟢 PART 3: OUTFIT DETECTION (SegFormer garment classes)
     # =====================================================
     outfits = detect_outfits(image, label_map=label_map, confidence_map=confidence_map)
+    outfits = enrich_outfits_with_attributes(outfits)
 
     # =====================================================
     # 🟣 PART 3: SAVE DETECTED CLOTHES TO CLOSET
