@@ -40,6 +40,7 @@
       "condition": {
         "color_contrast": "low"
       },
+      "dynamic_body": "undertone_colors",
       "suggestion": {
         "title": "Introduce Some Contrast",
         "body": "Your current outfit relies on very similar shades. Introducing a pop of a complementary color\u2014or even just a white layer underneath\u2014will add visual interest to your look."

@@ -1,6 +1,8 @@
 import json
 import os
 
+from recommendation_engine import _load_undertone_style, _flatten_ideal_colors
+
 def _is_color_bright(color_name):
     if not color_name: return False
     brights = ["red", "orange", "yellow", "pink", "lime", "cyan", "magenta", "light blue", "mint green"]
@@ -26,6 +28,117 @@ def _normalize_type_string(value):
     if not value:
         return ""
     return value.lower().replace("_", " ").replace("-", " ").strip()
+
+
+def _relevant_style_guide_categories(outfits):
+    """
+    Which style_guide categories are worth showing given what's actually in
+    THIS photo -- e.g. a detected dress has no business showing "Pants"/
+    "Jeans" cards. "sleeves" is deliberately never included here: its top
+    pick is folded into the generated body-type suggestion sentence instead
+    of getting its own detail card (see _generate_body_type_suggestion_body).
+    """
+    relevant = set()
+    if outfits.get("dress"):
+        relevant |= {"dresses", "necklines"}
+    if outfits.get("top"):
+        relevant |= {"shirts", "tops", "tshirts", "necklines"}
+    for item in outfits.get("bottom", []):
+        label = (item.get("label") or "").lower()
+        subcat = (item.get("subcategory") or "").lower()
+        if "skirt" in label or "skirt" in subcat:
+            relevant.add("skirts")
+        elif "jean" in subcat:
+            relevant.add("jeans")
+        elif subcat:
+            relevant.add("pants")
+        else:
+            # SegFormer's "pants" label covers both jeans and trousers; no
+            # classified subcategory to disambiguate yet, so show both.
+            relevant |= {"pants", "jeans"}
+    return relevant
+
+
+_CATEGORY_STEMS = {"dresses": "dress", "tops": "top", "shirts": "shirt", "tshirts": "shirt",
+                    "pants": "pant", "jeans": "jean", "skirts": "skirt", "necklines": "neck", "sleeves": "sleeve"}
+
+_CATEGORY_NOUNS = {"dresses": "dress", "tops": "top", "shirts": "shirt", "tshirts": "t-shirt",
+                   "pants": "pants", "jeans": "jeans", "skirts": "skirt", "necklines": "neckline",
+                   "sleeves": "sleeves"}
+
+
+def _sample_style_items(category_data, n=2):
+    if "recommended_items" in category_data:
+        return [item["type"].replace("_", " ").title() for item in category_data["recommended_items"][:n]]
+    return category_data.get("do", [])[:n]
+
+
+def _format_item(item_text, category_key):
+    """Appends the category noun unless the item text already names itself
+    (e.g. "Swing style dresses", "Deep V-neck", "Draped sleeves" all already
+    say what they are -- appending "dress"/"neckline"/"sleeves" again would
+    read as "Swing style dresses dress"). Checked against real data from
+    every body type before landing on this design."""
+    stem = _CATEGORY_STEMS.get(category_key, "")
+    if stem and stem in item_text.lower():
+        return item_text
+    noun = _CATEGORY_NOUNS.get(category_key, "")
+    return f"{item_text} {noun}".strip()
+
+
+def _generate_body_type_suggestion_body(style_guide, outfits):
+    """
+    Builds real, personalized advice text from this body type's own
+    style_guide (garment + neckline + top sleeve pick) instead of the
+    static sentence in body_rules. Returns None if the data needed isn't
+    there (e.g. Male style_guide content doesn't exist yet for any body
+    type) so the caller can fall back to the original static text.
+
+    The garment category referenced is whatever's actually detected in the
+    photo (reusing the same _relevant_style_guide_categories() the Style
+    Guide panel filters by, so the two always agree) -- e.g. someone
+    photographed in a shirt and jeans gets top-based advice, not a dress
+    suggestion just because dresses happen to be listed first for their
+    body type. Falls back to the original dresses-first priority only when
+    nothing was actually detected (e.g. a face-only selfie).
+    """
+    priority = ("dresses", "tops", "shirts", "tshirts")
+    relevant = _relevant_style_guide_categories(outfits)
+    detected = [c for c in priority if c in relevant and c in style_guide]
+    primary = detected[0] if detected else next((c for c in priority if c in style_guide), None)
+    necklines = style_guide.get("necklines")
+    if not primary or not necklines:
+        return None
+
+    garments = [_format_item(i, primary) for i in _sample_style_items(style_guide[primary])]
+    necks = [_format_item(i, "necklines") for i in _sample_style_items(necklines)]
+    if not garments or not necks:
+        return None
+
+    sentence = f"Try {' or '.join(garments)} with {' or '.join(necks)}"
+
+    sleeves = style_guide.get("sleeves")
+    if sleeves:
+        sleeve_pick = _sample_style_items(sleeves, n=1)
+        if sleeve_pick:
+            sentence += f" and {_format_item(sleeve_pick[0], 'sleeves')}"
+
+    return sentence + " to bring out your best proportions."
+
+
+def _generate_contrast_suggestion_body(undertone, default_body):
+    """Real colors from the user's own undertone file instead of the generic
+    'a complementary color' text. Falls back to the original static body if
+    the undertone has no usable color data (e.g. undertone="Unknown")."""
+    style = _load_undertone_style(undertone)
+    colors = _flatten_ideal_colors(style)
+    if len(colors) < 2:
+        return default_body
+    c1, c2 = colors[0].title(), colors[1].title()
+    return (
+        f"Your current outfit relies on very similar shades. Try adding a pop of {c1} or {c2} "
+        f"— colors that suit your {(undertone or 'neutral').lower()} undertone — for more visual interest."
+    )
 
 
 def _match_current_item_to_style_guide(category_data, outfits):
@@ -102,9 +215,18 @@ def evaluate_condition(condition, outfits, gender="Unisex"):
             # Check if any item's color family is in the value list
             has_family = any(_get_color_family(i.get("color_name", "")) in [v.lower() for v in value] for i in all_items)
             if not has_family: return False
-            
-        # Add more conditions as needed (outfit_fit, color_contrast, waist_emphasis, etc.)
-            
+
+        elif key == "color_contrast":
+            all_items = [i for cat in outfits.values() for i in cat]
+            families = [_get_color_family(i.get("color_name", "")) for i in all_items if i.get("color_name")]
+            # Can't assess contrast with fewer than 2 colored items, and if
+            # the colors span more than one family they're already varied --
+            # "low" contrast only means every item reads as the same family.
+            if len(families) < 2 or len(set(families)) > 1:
+                return False
+
+        # Add more conditions as needed (outfit_fit, waist_emphasis, etc.)
+
     return True
 
 def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neutral", outfits=None, gender="Female"):
@@ -133,33 +255,54 @@ def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neu
         with open(body_file, "r") as f:
             body_data = json.load(f)
 
-    # 1. Evaluate Body Rules
+    # Gender + the unfiltered style guide are needed up front now -- body-type
+    # suggestions (below) generate their text from this body type's own
+    # style_guide, not just the display-filtered version built later.
+    gender_key = gender.capitalize() if gender else "Female"
+    unfiltered_style_guide = body_data.get("style_guide", {}).get(gender_key, {})
+
+    # 1. Evaluate Body Rules -- suggestion body text is generated from real
+    # style_guide data (garment + neckline + top sleeve pick) when available,
+    # falling back to the static JSON text otherwise (e.g. Male, which has
+    # no style_guide content yet for any body type).
     actionable_suggestions = []
 
     body_rules = body_data.get("rules", [])
     for rule in body_rules:
         if evaluate_condition(rule.get("condition", {}), outfits, gender):
-            actionable_suggestions.append(rule.get("suggestion"))
-            
-    # 2. Evaluate Color Rules
+            suggestion = dict(rule.get("suggestion", {}))
+            generated_body = _generate_body_type_suggestion_body(unfiltered_style_guide, outfits)
+            if generated_body:
+                suggestion["body"] = generated_body
+            actionable_suggestions.append(suggestion)
+
+    # 2. Evaluate Color Rules -- the rule marked "dynamic_body":
+    # "undertone_colors" (currently just "Introduce Some Contrast") gets its
+    # body text generated from the user's real undertone colors instead of
+    # the generic static text.
     color_rules = styling_db.get("color_rules", [])
     for rule in color_rules:
         if evaluate_condition(rule.get("condition", {}), outfits, gender):
-            actionable_suggestions.append(rule.get("suggestion"))
-            
+            suggestion = dict(rule.get("suggestion", {}))
+            if rule.get("dynamic_body") == "undertone_colors":
+                suggestion["body"] = _generate_contrast_suggestion_body(undertone, suggestion.get("body", ""))
+            actionable_suggestions.append(suggestion)
+
     # Limit suggestions to top 2 so we don't overwhelm the user
     actionable_suggestions = actionable_suggestions[:2]
-            
+
     # 3. Get Face Rules based on Gender
     face_key = face_shape.capitalize() if face_shape else "Oval"
     face_rules = styling_db.get("face_rules", {}).get(face_key, {})
-    
-    # Get the specific gender rules ("Female" or "Male"). Fallback to female "suggestions" if missing (legacy)
-    gender_key = gender.capitalize() if gender else "Female"
     gendered_face_rules = face_rules.get(gender_key, face_rules.get("suggestions", {}))
 
-    # 4. Static reference style guide (Do's/Avoid's per garment category) for this body type + gender
-    style_guide = body_data.get("style_guide", {}).get(gender_key, {})
+    # 4. Style guide, filtered down to categories relevant to what's actually
+    # in this photo (e.g. a detected dress won't show Pants/Jeans cards).
+    relevant_categories = _relevant_style_guide_categories(outfits)
+    style_guide = {
+        k: v for k, v in unfiltered_style_guide.items()
+        if k == "characteristics" or k in relevant_categories
+    }
 
     # 5. Match the current outfit's classified attributes (garment_classifier.py,
     # when available) against rich-format style_guide categories -- turns
