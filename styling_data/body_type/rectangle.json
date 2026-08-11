@@ -1,0 +1,140 @@
+{
+  "rules": [
+    {
+      "condition": {
+        "gender": "Female"
+      },
+      "suggestion": {
+        "title": "Create Natural Curves",
+        "body": "To add dimension to your balanced shape, try using belts to cinch the waist, or wear layered outfits and ruched dresses to create the illusion of flowing curves."
+      },
+      "priority": 1
+    },
+    {
+      "condition": {
+        "gender": "Male"
+      },
+      "suggestion": {
+        "title": "Broaden the Shoulders",
+        "body": "To add dimension to your straight torso, try layering with structured jackets like blazers or overshirts. A tailored shirt tucked into slim-straight trousers will give you a sharp, defined look."
+      },
+      "priority": 1
+    }
+  ],
+  "style_guide": {
+    "Female": {
+      "characteristics": [
+        "Bust and hips are about the same range",
+        "Straight shoulder line",
+        "Might have little waist definition",
+        "Straight silhouette",
+        "Petite bust and butt size",
+        "Lean look",
+        "H-shape silhouette"
+      ],
+      "tops": {
+        "do": [
+          "Tank tops",
+          "Wraps",
+          "Cowl camisole",
+          "Belted",
+          "Button-downs"
+        ],
+        "avoid": []
+      },
+      "necklines": {
+        "do": [
+          "Scoop",
+          "V-neck",
+          "Bateau",
+          "Off-shoulder",
+          "Sweetheart",
+          "Halter",
+          "Turtleneck",
+          "Crew",
+          "Cowl"
+        ],
+        "avoid": []
+      },
+      "shirts": {
+        "do": [
+          "Wrap",
+          "Button-down",
+          "Belted",
+          "Ruffle",
+          "Ascot/bow neck detail"
+        ],
+        "avoid": []
+      },
+      "sleeves": {
+        "do": [
+          "Rolled up",
+          "Puffed",
+          "Flutter",
+          "Flare",
+          "Cuffed"
+        ],
+        "avoid": [
+          "Fitted sleeves"
+        ]
+      },
+      "dresses": {
+        "do": [
+          "Wrap",
+          "X-line",
+          "Shift",
+          "Empire",
+          "Princess seam",
+          "A-line",
+          "Fit and flared",
+          "One shoulder",
+          "Puff sleeves",
+          "Ruched waist"
+        ],
+        "avoid": []
+      },
+      "tshirts": {
+        "do": [
+          "Tank tops",
+          "Button-down"
+        ],
+        "avoid": []
+      },
+      "pants": {
+        "do": [
+          "Cargo",
+          "Harem",
+          "Wide leg",
+          "Bootcut",
+          "Turn-up"
+        ],
+        "avoid": []
+      },
+      "skirts": {
+        "do": [
+          "Circle",
+          "A-line",
+          "Bubble",
+          "Layered",
+          "Pencil",
+          "Pleated",
+          "Paneled",
+          "Trumpet",
+          "Straight",
+          "Gathered waist"
+        ],
+        "avoid": []
+      },
+      "jeans": {
+        "do": [
+          "Slim",
+          "Straight",
+          "Bootcut",
+          "Wide leg",
+          "Trouser style"
+        ],
+        "avoid": []
+      }
+    }
+  }
+}

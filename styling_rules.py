@@ -247,9 +247,10 @@ def get_styling_recommendations(body_type, face_shape, skin_tone, undertone="Neu
     if body_key == "pear": body_key = "triangle"
 
     # Body-type-specific content (rules + style guide) lives in its own file
-    # under styling_data/, one per body type -- keeps future additions (new
-    # garment categories, more body types) to small, isolated file diffs.
-    body_file = os.path.join(base_dir, "styling_data", f"{body_key}.json")
+    # under styling_data/body_type/, one per body type -- keeps future
+    # additions (new garment categories, more body types) to small, isolated
+    # file diffs.
+    body_file = os.path.join(base_dir, "styling_data", "body_type", f"{body_key}.json")
     body_data = {}
     if os.path.exists(body_file):
         with open(body_file, "r") as f:

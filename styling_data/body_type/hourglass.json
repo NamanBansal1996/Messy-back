@@ -1,0 +1,191 @@
+{
+  "rules": [
+    {
+      "condition": {
+        "gender": "Female"
+      },
+      "suggestion": {
+        "title": "Highlight Your Curves",
+        "body": "Your perfectly balanced shape looks best when the waist is highlighted. Wrap dresses, belted coats, and fitted tops are your best friends."
+      },
+      "priority": 1
+    },
+    {
+      "condition": {
+        "gender": "Male"
+      },
+      "suggestion": {
+        "title": "Athletic Proportions",
+        "body": "You have a balanced, athletic build. Tailored V-necks, fitted shirts, and structured blazers work exceptionally well to enhance your natural proportions without looking overly constricted."
+      },
+      "priority": 1
+    }
+  ],
+  "style_guide": {
+    "Female": {
+      "characteristics": [
+        "Shoulders are usually rounded, from delicate to broad in size",
+        "Bust is medium to full in size and proportionate to the curves in the lower body",
+        "Defined, sharp waist",
+        "Round silhouette in the upper body"
+      ],
+      "necklines": {
+        "do": [
+          "Scoop",
+          "V-neck",
+          "Off-shoulder",
+          "Jewel",
+          "Oval",
+          "Sweetheart",
+          "Queen Anne"
+        ],
+        "avoid": []
+      },
+      "sleeves": {
+        "do": [
+          "Set-in",
+          "Fitted",
+          "Bishop",
+          "No sleeves"
+        ],
+        "avoid": []
+      },
+      "shirts": {
+        "do": [
+          "Fitted",
+          "Wrap",
+          "Belted",
+          "Peplum",
+          "Keyhole"
+        ],
+        "avoid": []
+      },
+      "tops": {
+        "recommended_items": [
+          {
+            "type": "t_shirt",
+            "advice": "Choose fitted T-shirts made from soft fabrics to highlight your natural curves without adding unnecessary bulk."
+          },
+          {
+            "type": "halter",
+            "advice": "Halter tops showcase balanced shoulders and emphasize the waist, complementing an hourglass figure."
+          },
+          {
+            "type": "trapeze",
+            "advice": "Trapeze tops provide a flattering drape while maintaining the natural balance of an hourglass silhouette."
+          },
+          {
+            "type": "circle",
+            "advice": "Circle tops add soft movement while preserving your naturally balanced proportions."
+          },
+          {
+            "type": "peplum",
+            "advice": "Peplum tops accentuate the waist and enhance your natural curves."
+          },
+          {
+            "type": "wrap",
+            "advice": "Wrap tops cinch at the waist, highlighting your narrow midsection and emphasizing your curves."
+          },
+          {
+            "type": "v_neck",
+            "advice": "V-neck tops draw attention to the bust and elongate the neck while maintaining balanced proportions."
+          },
+          {
+            "type": "scoop_neck",
+            "advice": "Scoop neck tops flatter the bust and neckline while complementing an hourglass body shape."
+          },
+          {
+            "type": "fitted_button_down",
+            "advice": "Fitted button-down shirts define the waist and enhance your natural shape without adding bulk."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "boxy",
+            "advice": "Avoid boxy tops, as they can hide your curves and make your body appear less defined."
+          },
+          {
+            "type": "oversized",
+            "advice": "Avoid oversized tops because they can obscure your waist and create a shapeless silhouette."
+          },
+          {
+            "type": "high_neck",
+            "advice": "Avoid high-neck tops, as they can make the bust appear larger and disrupt your balanced proportions."
+          },
+          {
+            "type": "loose_unstructured",
+            "advice": "Avoid loose, unstructured tops since they hide the waist and reduce the definition of your natural curves."
+          }
+        ],
+        "general_advice": [
+          "Choose tops that define the waist and follow your natural curves rather than hiding them."
+        ]
+      },
+      "pants": {
+        "recommended_items": [
+          {
+            "type": "slim",
+            "advice": "Slim-fit pants follow your natural curves without being too tight, maintaining the balanced proportions of an hourglass figure."
+          },
+          {
+            "type": "straight",
+            "advice": "Straight-leg pants create a clean, streamlined silhouette while complementing your naturally balanced shape."
+          },
+          {
+            "type": "bootcut",
+            "advice": "Bootcut pants gently flare below the knee, balancing your curves while creating a long, elegant silhouette."
+          },
+          {
+            "type": "wide_leg",
+            "advice": "Wide-leg pants drape beautifully from the hips, maintaining your balanced proportions while adding graceful movement."
+          },
+          {
+            "type": "top_entry_pockets",
+            "advice": "Pants with top-entry pockets create a smooth look around the hips without adding unnecessary bulk, flattering an hourglass figure."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "baggy",
+            "advice": "Avoid baggy pants, as they can hide your natural curves and make your silhouette appear less defined."
+          }
+        ],
+        "general_advice": [
+          "Choose pants that follow your natural curves and define your waist without adding excess volume."
+        ]
+      },
+      "jeans": {
+        "do": [
+          "Straight",
+          "Bootleg",
+          "Wide",
+          "Slim",
+          "Flared",
+          "High/mid-rise"
+        ],
+        "avoid": []
+      },
+      "skirts": {
+        "do": [
+          "Full",
+          "Pencil",
+          "Gored",
+          "A-line",
+          "Tulip"
+        ],
+        "avoid": []
+      },
+      "dresses": {
+        "do": [
+          "Bias",
+          "Peplum",
+          "Shift",
+          "Wrap",
+          "Corset",
+          "Sheath"
+        ],
+        "avoid": []
+      }
+    }
+  }
+}

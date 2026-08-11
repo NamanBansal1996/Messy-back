@@ -1,0 +1,157 @@
+{
+  "rules": [
+    {
+      "condition": {},
+      "suggestion": {
+        "title": "Elongate Your Profile",
+        "body": "Flowy tops, V-necks, and open cardigans are great for elongating your silhouette and drawing attention vertically. Avoid overly tight belts around the midsection."
+      },
+      "priority": 1
+    }
+  ],
+  "style_guide": {
+    "Female": {
+      "characteristics": [
+        "Rounded silhouette",
+        "Broad shoulders and fuller bust",
+        "Less defined waistline",
+        "Leaner arms and legs"
+      ],
+      "necklines": {
+        "do": [
+          "Sweetheart",
+          "Scoop",
+          "V-neckline",
+          "Deep necklines",
+          "Wide necklines",
+          "Detailed necklines"
+        ],
+        "avoid": []
+      },
+      "sleeves": {
+        "do": [
+          "Draped sleeves",
+          "Cap sleeves",
+          "Flared sleeves",
+          "Slit sleeves"
+        ],
+        "avoid": []
+      },
+      "tops": {
+        "recommended_items": [
+          {
+            "type": "swing",
+            "advice": "Swing tops skim over the midsection, creating a flattering silhouette without clinging to the tummy area."
+          },
+          {
+            "type": "draped",
+            "advice": "Draped tops create soft lines that camouflage the midsection while adding elegant movement."
+          },
+          {
+            "type": "tunic",
+            "advice": "Tunic tops provide extra length and coverage, drawing attention away from the waist and creating a balanced look."
+          },
+          {
+            "type": "wrap",
+            "advice": "Wrap tops define the waist and create the illusion of a more balanced silhouette while flattering the bust."
+          },
+          {
+            "type": "trapeze",
+            "advice": "Trapeze tops flare gently away from the body, providing comfort while minimizing focus on the midsection."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "crop",
+            "advice": "Avoid crop tops, as they draw attention to the midsection and can make the tummy area more prominent."
+          },
+          {
+            "type": "tight_fitted",
+            "advice": "Avoid tight-fitted tops, as they cling to the tummy and emphasize the widest part of the body."
+          }
+        ],
+        "general_advice": [
+          "Choose tops that skim over the midsection while drawing attention to the neckline and shoulders."
+        ]
+      },
+      "pants": {
+        "recommended_items": [
+          {
+            "type": "bootcut",
+            "advice": "Bootcut pants create balance by adding subtle width below the knee, complementing an apple body shape."
+          },
+          {
+            "type": "cargo",
+            "advice": "Cargo pants add visual interest to the lower body, helping balance a fuller upper body."
+          },
+          {
+            "type": "flare",
+            "advice": "Flared pants create a balanced silhouette by adding volume below the knee."
+          },
+          {
+            "type": "flowy",
+            "advice": "Flowy pants drape smoothly over the legs, creating an elongated and flattering silhouette."
+          },
+          {
+            "type": "wide_leg",
+            "advice": "Wide-leg pants balance the wider midsection with the slimmer legs, creating more harmonious proportions."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "tapered",
+            "advice": "Avoid very tapered pants, as they emphasize slim legs and can make the upper body appear larger."
+          },
+          {
+            "type": "high_waisted",
+            "advice": "Avoid high-waisted pants if they emphasize the tummy area and draw attention to the midsection."
+          },
+          {
+            "type": "front_pleats",
+            "advice": "Avoid pants with front pleats, as they can add unnecessary volume around the tummy."
+          },
+          {
+            "type": "front_ruching",
+            "advice": "Avoid pants with front ruching, as they can highlight the midsection instead of creating a smooth silhouette."
+          }
+        ],
+        "general_advice": [
+          "Choose pants that balance the upper body by adding volume or movement to the lower half while keeping the front of the waist smooth."
+        ]
+      },
+      "jeans": {
+        "do": [
+          "Skinny jeans",
+          "Wide-leg jeans",
+          "Straight jeans",
+          "Flared jeans"
+        ],
+        "avoid": []
+      },
+      "skirts": {
+        "do": [
+          "Pencil skirt",
+          "A-line skirt",
+          "Flared skirt",
+          "Full skirt",
+          "Pleated skirt",
+          "Asymmetric skirt",
+          "Straight skirt"
+        ],
+        "avoid": []
+      },
+      "dresses": {
+        "do": [
+          "Swing style dresses",
+          "Skater dresses",
+          "Full-skirted & flared dresses",
+          "Wrap dresses",
+          "Structured shift dresses",
+          "Off-shoulder dresses",
+          "Bias-cut dresses"
+        ],
+        "avoid": []
+      }
+    }
+  }
+}

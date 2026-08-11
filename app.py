@@ -195,18 +195,34 @@ def get_body_mask_grabcut(image, pose_landmarks, h, w):
         return None
 
 
-def get_silhouette_width_at_y(body_mask, y_row):
-    """Given a binary (0/1 or 0/255) body mask, returns silhouette width at row y."""
+def get_silhouette_width_at_y(body_mask, y_row, x_bounds=None):
+    """
+    Given a binary (0/1 or 0/255) body mask, returns silhouette width at row
+    y. When x_bounds=(min_x, max_x) is given, the row is clipped to that
+    range before measuring -- used to exclude an arm hanging beside the
+    torso from the waist/hip width when check_arms_occlude_torso() has
+    flagged that risk (see classify_body_type_v2).
+    """
     h, w = body_mask.shape
     y = int(np.clip(y_row, 0, h - 1))
     row = body_mask[y, :]
+    if x_bounds is not None:
+        x_min = int(np.clip(x_bounds[0], 0, w))
+        x_max = int(np.clip(x_bounds[1], 0, w))
+        if x_max <= x_min:
+            return None
+        row = row[x_min:x_max]
+        cols = np.where(row > 0)[0]
+        if len(cols) < 2:
+            return None
+        return int(cols[-1] - cols[0])
     cols = np.where(row > 0)[0]
     if len(cols) < 2:
         return None
     return int(cols[-1] - cols[0])
 
 
-def get_band_median_width(mask, y_row, band=3):
+def get_band_median_width(mask, y_row, band=3, x_bounds=None):
     """
     Median silhouette width across a small vertical band of rows around
     y_row, instead of trusting a single row. A single row is vulnerable to
@@ -220,7 +236,7 @@ def get_band_median_width(mask, y_row, band=3):
     for dy in range(-band, band + 1):
         y = y_row + dy
         if 0 <= y < h:
-            width = get_silhouette_width_at_y(mask, y)
+            width = get_silhouette_width_at_y(mask, y, x_bounds=x_bounds)
             if width is not None and width > 5:
                 widths.append(width)
     if not widths:
@@ -364,26 +380,44 @@ def classify_body_type_v2(image, pose_landmarks, gender="Female", person_mask=No
             "measurements; for best results stand with arms slightly away from the body."
         )
 
+    # When arms are occluding the waist/hip band, an unbounded silhouette
+    # scan measures arm-to-arm width rather than torso width (person_mask is
+    # "not background" and doesn't distinguish arm pixels from torso pixels;
+    # in a normal arms-at-sides pose the arm is mask-connected to the torso,
+    # so there's no gap to exploit via connected components either). Bound
+    # the scan to a torso-plausible x-range instead, derived from the
+    # skeleton landmarks -- padded generously enough to still capture real
+    # body curve (a genuine Pear's flared hips, an Apple's waist bulge)
+    # while excluding most of a hanging forearm/hand's lateral reach.
+    torso_x_bounds = None
+    if arms_occlude:
+        skeleton_shoulder_w = euclidean_distance(ls, rs)
+        pad = 0.30 * skeleton_shoulder_w
+        torso_x_bounds = (
+            min(ls[0], rs[0], lh[0], rh[0]) - pad,
+            max(ls[0], rs[0], lh[0], rh[0]) + pad,
+        )
+
     # ── Get widths: SegFormer silhouette first, GrabCut then edge-scan as fallback ──
     grabcut_mask = None  # computed lazily, only if segmentation is unavailable
 
-    def get_width(y_row):
-        width = get_band_median_width(person_mask, y_row)
+    def get_width(y_row, x_bounds=None):
+        width = get_band_median_width(person_mask, y_row, x_bounds=x_bounds)
         if width is not None:
             return width
         nonlocal grabcut_mask
         if grabcut_mask is None:
             grabcut_mask = get_body_mask_grabcut(image, pose_landmarks, h, w)
-        width = get_band_median_width(grabcut_mask, y_row)
+        width = get_band_median_width(grabcut_mask, y_row, x_bounds=x_bounds)
         if width is not None:
             return width
         return get_body_width_at_y(image, y_row, x_center)
 
     W_shoulder = get_width(y_shoulder) or euclidean_distance(ls, rs)
     W_bust     = get_width(y_bust)     or W_shoulder
-    W_waist    = get_width(y_waist)    or (euclidean_distance(ls, rs) * 0.75)
-    W_high_hip = get_width(y_high_hip) or euclidean_distance(lh, rh)
-    W_hip      = get_width(y_hip)      or euclidean_distance(lh, rh)
+    W_waist    = get_width(y_waist, x_bounds=torso_x_bounds)    or (euclidean_distance(ls, rs) * 0.75)
+    W_high_hip = get_width(y_high_hip, x_bounds=torso_x_bounds) or euclidean_distance(lh, rh)
+    W_hip      = get_width(y_hip, x_bounds=torso_x_bounds)      or euclidean_distance(lh, rh)
     W_thigh    = get_width(y_thigh)    or (W_hip * 0.55)
 
     def norm(val):
@@ -431,10 +465,10 @@ def classify_body_type_v2(image, pose_landmarks, gender="Female", person_mask=No
         logic = "Hips wider than shoulders"
         margin = min((hip_to_shoulder - 1.10) / 0.30, (pear_waist_cut - waist_to_hip) / pear_waist_cut)
 
-    elif hip_to_shoulder < 0.90 and waist_to_shoulder > 0.80:
+    elif hip_to_shoulder < 0.90:
         body_type = "Inverted Triangle"
-        logic = "Shoulders wider, narrow hips"
-        margin = min((0.90 - hip_to_shoulder) / 0.90, (waist_to_shoulder - 0.80) / 0.20)
+        logic = "Shoulders wider than hips"
+        margin = (0.90 - hip_to_shoulder) / 0.90
 
     elif waist_to_hip >= apple_cut and waist_to_shoulder >= apple_cut:
         body_type = "Apple"

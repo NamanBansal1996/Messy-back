@@ -1,0 +1,30 @@
+[
+  {
+    "item_id": "jeans_001",
+    "name": "Dark Blue Bootcut Jeans",
+    "type": "bootcut",
+    "color": "dark_blue",
+    "pattern": "solid",
+    "fit": "regular",
+    "rise": "mid",
+    "length": "full",
+    "fabric": "denim",
+    "style": ["casual", "smart_casual"],
+    "occasion": ["casual", "college", "outing"],
+    "image": "jeans_001.jpg"
+  },
+  {
+    "item_id": "jeans_002",
+    "name": "Black Skinny Jeans",
+    "type": "skinny",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "fitted",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": ["casual"],
+    "occasion": ["casual", "outing"],
+    "image": "jeans_002.jpg"
+  }
+]

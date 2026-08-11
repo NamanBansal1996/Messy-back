@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as
 # returned a correct classification in the same test.
 DEFAULT_MODEL = os.environ.get("GARMENT_CLASSIFIER_MODEL", "claude-haiku-4-5-20251001")
 
-# Only these broad categories get classified. No styling_data/*.json
+# Only these broad categories get classified. No styling_data/body_type/*.json
 # style_guide (as of this session) references footwear or accessories, so
 # classifying belts/bags/scarves/shoes would spend real money on data
 # nothing downstream consumes.
