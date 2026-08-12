@@ -1,30 +1,252 @@
 [
   {
     "item_id": "jeans_001",
-    "name": "Dark Blue Bootcut Jeans",
-    "type": "bootcut",
-    "color": "dark_blue",
+    "name": "dark indigo wide leg Jeans",
+    "type": "wide_leg",
+    "color": "dark_indigo",
     "pattern": "solid",
-    "fit": "regular",
-    "rise": "mid",
+    "fit": "wideleg",
+    "rise": "high",
     "length": "full",
     "fabric": "denim",
-    "style": ["casual", "smart_casual"],
-    "occasion": ["casual", "college", "outing"],
-    "image": "jeans_001.jpg"
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/womenwideleg.jpg.webp"
   },
   {
     "item_id": "jeans_002",
-    "name": "Black Skinny Jeans",
+    "name": "medium indigo wide leg Jeans",
+    "type": "wide_leg",
+    "color": "medium_indigo",
+    "pattern": "solid",
+    "fit": "wideleg",
+    "rise": "mid",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/women_wideleg.jpg.webp"
+  },
+  {
+    "item_id": "jeans_003",
+    "name": "black bootcut Jeans",
+    "type": "bootcut",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "bootcut",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/bootcut_jeans.jpg.webp"
+  },
+  {
+    "item_id": "jeans_004",
+    "name": "medium indigo bootcut jeans",
+    "type": "bootcut",
+    "color": "medium_indigo",
+    "pattern": "solid",
+    "fit": "bootcut",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/bootcutjeans.jpg.webp"
+  },
+  {
+    "item_id": "jeans_005",
+    "name": "black skinny Jeans",
     "type": "skinny",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "skinny",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/skinnyjeans.jpg.webp"
+  },
+  {
+    "item_id": "jeans_006",
+    "name": "dark indigo skinny jeans",
+    "type": "skinny",
+    "color": "dark_indigo",
+    "pattern": "solid",
+    "fit": "skinny",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/skinny.jpg.webp"
+  },
+  {
+    "item_id": "jeans_007",
+    "name": "black baggy Jeans",
+    "type": "baggy",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "baggy",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/women_baggyjeans.jpg.webp"
+  },
+  {
+    "item_id": "jeans_008",
+    "name": "dark indigo baggy Jeans",
+    "type": "baggy",
+    "color": "dark_indigo",
+    "pattern": "solid",
+    "fit": "baggy",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/womenbaggyjeans.jpg.webp"
+  },
+  {
+    "item_id": "jeans_009",
+    "name": "dark indigo loose fit Jeans",
+    "type": "loose_fit",
+    "color": "dark_indigo",
+    "pattern": "solid",
+    "fit": "loose fit",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/women_loosefir.jpg.webp"
+  },
+  {
+    "item_id": "jeans_010",
+    "name": "dark indigo loose fit Jeans",
+    "type": "loose_fit",
+    "color": "dark_indigo",
+    "pattern": "solid",
+    "fit": "loosefit",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/womenloosefit.jpg.webp"
+  },
+  {
+    "item_id": "jeans_011",
+    "name": "dark indigo staright Jeans",
+    "type": "straight",
+    "color": "dark_indigo",
+    "pattern": "solid",
+    "fit": "straight",
+    "rise": "high",
+    "length": "full",
+    "fabric": "denim",
+    "style": [
+      "casual",
+      "smart_casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "image": "female/fjeans/womenstraightjeans.jpg.webp"
+  },
+  {
+    "item_id": "jeans_012",
+    "name": "Black Straight Jeans",
+    "type": "straight",
     "color": "black",
     "pattern": "solid",
     "fit": "fitted",
     "rise": "high",
     "length": "full",
     "fabric": "denim",
-    "style": ["casual"],
-    "occasion": ["casual", "outing"],
-    "image": "jeans_002.jpg"
+    "style": [
+      "casual"
+    ],
+    "occasion": [
+      "casual",
+      "outing"
+    ],
+    "image": "female/fjeans/women_starightjeans.jpg.webp"
   }
 ]
