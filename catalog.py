@@ -3,32 +3,25 @@ catalog.py
 
 Modular Product Catalog interface for the MeSS Recommendation Engine.
 
-Today this reads from a static JSON file (catalog_data.json) seeded with the
-7 products already hardcoded in the frontend's Ads.jsx ("Shop the Look"
-sidebar) -- same images, same affiliate links, just made queryable from the
-backend instead of living only inside a React component.
+This reads from the catalog_items table in Supabase (Postgres) -- see
+db.py for the connection/schema and migrate_catalog_to_db.py for the
+one-off script that seeded it from the 7 products that used to live in
+catalog_data.json (originally hardcoded in the frontend's Ads.jsx
+"Shop the Look" sidebar).
 
 get_catalog_items() is the ONLY function recommendation_engine.py depends on.
-Swapping the internals for a real product database or external API later
+Swapping the internals for a different database or external API later
 requires no changes anywhere else in the codebase -- that's the point of
 keeping this behind one small interface.
 """
 
-import json
-import os
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CATALOG_FILE = os.path.join(BASE_DIR, "catalog_data.json")
+import db
 
 
 def _load_catalog():
-    if not os.path.exists(CATALOG_FILE):
-        return []
-    with open(CATALOG_FILE, "r") as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return []
+    client = db.get_client()
+    response = client.table("catalog_items").select("*").execute()
+    return [db.row_to_catalog_item(row) for row in response.data]
 
 
 def get_catalog_items(category=None, gender=None):
