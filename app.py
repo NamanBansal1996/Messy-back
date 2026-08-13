@@ -1201,6 +1201,20 @@ def get_closet(user_id):
     return jsonify({"user_id": user_id, "closet": items})
 
 
+@app.route("/weather", methods=["GET"])
+def weather():
+    """
+    Standalone weather lookup for frontend widgets (e.g. the homepage hero
+    banner) that need a current temperature without running a full /analyze
+    image upload. Thin wrapper around weather_service.get_current_weather,
+    which already handles missing coordinates/API key/network failure by
+    falling back to DEFAULT_WEATHER -- never raises.
+    """
+    lat = request.args.get("lat", type=float)
+    lon = request.args.get("lon", type=float)
+    return jsonify(get_current_weather(lat, lon))
+
+
 
 # ──────────────────────────────────────────────────────────────────
 # ROUTE 1: Single garment try-on
