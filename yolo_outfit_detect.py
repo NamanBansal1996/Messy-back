@@ -7,7 +7,7 @@ import cv2
 import base64
 import numpy as np
 from color_utils import get_dominant_color
-from segformer_parser import mask_out_skin_and_bg, parse_human
+from segformer_parser import mask_out_skin_and_bg, parse_human, remove_background_only
 
 # =====================================================
 # 🔹 DIGITAL WARDROBE BASE DIR
@@ -32,19 +32,20 @@ WARDROBE_DIR = os.path.join(BASE_DIR, "digital_wardrobe")
 
 # class_id -> (category, label)
 #
-# Class 11 (Headwear) is deliberately excluded: testing against 6 real
-# photos, none wearing a hat, showed it firing every single time (0.82-0.96
-# confidence) -- it appears to confuse hair/hairline regions with headwear
-# rather than reliably detecting actual hats. Re-add it if/when that's
-# verified against real hat-wearing photos.
+# Class 1 (Hat) is deliberately excluded: it's never actually been tested
+# against real hat-wearing photos -- the class IDs previously assumed here
+# were wrong across the board (see segformer_parser.py), and the old
+# "headwear" exclusion at class 11 was reacting to Face (misread as
+# headwear), not Hat, so it never really tested hat detection at all.
+# Leave disabled until verified separately against real photos.
 SEGFORMER_GARMENT_CLASSES = {
     4:  ("top", "shirt"),
     5:  ("bottom", "skirt"),
     6:  ("bottom", "pants"),
     7:  ("dress", "dress"),
     8:  ("accessories", "belt"),
-    12: ("accessories", "bag"),
-    13: ("accessories", "scarf"),
+    16: ("accessories", "bag"),
+    17: ("accessories", "scarf"),
 }
 # Left-shoe (9) and Right-shoe (10) are merged into one "shoes" item rather
 # than reported as two separate footwear entries.
@@ -97,6 +98,12 @@ def detect_outfits(image, label_map=None, confidence_map=None):
     # Full transparent RGBA image of only the clothes, for saved/preview crops
     image_rgba = mask_out_skin_and_bg(image, label_map=label_map)
 
+    # Full-person cutout (background removed only, skin/hair/clothes intact)
+    # for the main preview and Virtual Try-On base photo.
+    person_rgba = remove_background_only(image, label_map=label_map)
+    _, person_buffer = cv2.imencode(".png", person_rgba)
+    person_rgba_b64 = base64.b64encode(person_buffer).decode("utf-8")
+
     img_h, img_w = label_map.shape
     min_area = max(MIN_ITEM_AREA_FLOOR_PX, int(img_h * img_w * MIN_ITEM_AREA_FRACTION))
 
@@ -106,6 +113,7 @@ def detect_outfits(image, label_map=None, confidence_map=None):
         "dress": [],
         "footwear": [],
         "accessories": [],
+        "person_rgba": person_rgba_b64,
     }
 
     # Each entry: (category, label, binary mask of exactly that garment)

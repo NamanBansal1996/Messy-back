@@ -36,6 +36,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 mp_pose = mp.solutions.pose
 mp_face_mesh = mp.solutions.face_mesh
+mp_face_detection = mp.solutions.face_detection
 
 # ---------------- UTILS ----------------
 def euclidean_distance(p1, p2):
@@ -617,6 +618,103 @@ def assess_face_quality(landmarks, image, h):
     return quality, warnings
 
 
+def _crop_upscale_and_mesh(image, x1, y1, x2, y2, target_min_dim=400):
+    """
+    Crops the given box out of image, upscales it so its shorter side
+    reaches target_min_dim, runs FaceMesh on just that crop, and remaps any
+    resulting landmarks back into ORIGINAL image pixel coordinates. Returns
+    None if the box is degenerate or no face is found in the crop.
+    """
+    h, w = image.shape[:2]
+    x1, y1 = max(0, int(x1)), max(0, int(y1))
+    x2, y2 = min(w, int(x2)), min(h, int(y2))
+    if x2 <= x1 or y2 <= y1:
+        return None
+
+    crop = image[y1:y2, x1:x2]
+    crop_h, crop_w = crop.shape[:2]
+    if crop_h == 0 or crop_w == 0:
+        return None
+
+    scale = max(1.0, target_min_dim / min(crop_h, crop_w))
+    crop_up = cv2.resize(crop, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC) if scale > 1.0 else crop
+    crop_up_rgb = cv2.cvtColor(crop_up, cv2.COLOR_BGR2RGB)
+    crop_up_h, crop_up_w = crop_up.shape[:2]
+
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5) as face_mesh:
+        result = face_mesh.process(crop_up_rgb)
+
+    if not result.multi_face_landmarks:
+        return None
+
+    landmarks = result.multi_face_landmarks[0]
+    lm_pixels = {}
+    for idx, lm in enumerate(landmarks.landmark):
+        orig_crop_px_x = (lm.x * crop_up_w) / scale
+        orig_crop_px_y = (lm.y * crop_up_h) / scale
+        lm_pixels[idx] = (int(orig_crop_px_x + x1), int(orig_crop_px_y + y1))
+    return lm_pixels
+
+
+def locate_face_landmarks(image, rgb, pose_results=None):
+    """
+    3-tier cascade for locating face landmarks reliably even when the face
+    is small relative to the frame -- FaceMesh's internal face detector is
+    hardcoded to a short-range model tuned for large-in-frame faces (no
+    way to configure it otherwise), so it silently misses faces in exactly
+    the full-body photos this app requires for body-type detection, even
+    though a face is clearly, visibly present. Verified against real
+    photos: FaceMesh alone failed on full-body shots where a face was
+    plainly visible; each tier below recovered a different failure case.
+
+    Returns lm_pixels (landmark index -> (x, y) in ORIGINAL image pixel
+    coordinates) or None if no face could be located by any tier.
+    """
+    h, w = image.shape[:2]
+
+    # Tier 1: direct FaceMesh on the full image -- cheapest, most precise,
+    # covers any photo where the face is already large in frame (e.g. a
+    # genuine close-up selfie).
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5) as face_mesh:
+        result = face_mesh.process(rgb)
+    if result.multi_face_landmarks:
+        landmarks = result.multi_face_landmarks[0]
+        return {idx: (int(lm.x * w), int(lm.y * h)) for idx, lm in enumerate(landmarks.landmark)}
+
+    # Tier 2: the standalone short-range FaceDetection model sometimes
+    # finds a face on the full image that FaceMesh's own internal detector
+    # missed on the identical image. If it does, crop generously around
+    # that (precise) box, upscale, and retry FaceMesh on just the crop.
+    with mp_face_detection.FaceDetection(min_detection_confidence=0.5, model_selection=0) as face_detection:
+        fd_result = face_detection.process(rgb)
+    if fd_result.detections:
+        bbox = fd_result.detections[0].location_data.relative_bounding_box
+        bx1, by1 = bbox.xmin * w, bbox.ymin * h
+        bw, bh = bbox.width * w, bbox.height * h
+        pad_x, pad_y = bw * 0.6, bh * 0.6
+        lm_pixels = _crop_upscale_and_mesh(image, bx1 - pad_x, by1 - pad_y, bx1 + bw + pad_x, by1 + bh + pad_y)
+        if lm_pixels is not None:
+            return lm_pixels
+
+    # Tier 3: fall back to mp_pose's nose landmark as a coarse head-location
+    # guess, for faces too small for even the dedicated detector to find
+    # (e.g. a small figure in a large, padded full-body photo). Reuses
+    # pose_results if the caller already computed it (as /analyze does);
+    # otherwise runs pose fresh, only on this fallback path.
+    if pose_results is None:
+        with mp_pose.Pose(static_image_mode=True) as pose:
+            pose_results = pose.process(rgb)
+    if pose_results and pose_results.pose_landmarks:
+        nose = pose_results.pose_landmarks.landmark[0]
+        nx, ny = nose.x * w, nose.y * h
+        half = h * 0.12
+        lm_pixels = _crop_upscale_and_mesh(image, nx - half, ny - half, nx + half, ny + half)
+        if lm_pixels is not None:
+            return lm_pixels
+
+    return None
+
+
 def classify_face_shape(landmarks, image, hair_mask=None):
     """
     Face shape classifier using MediaPipe landmark indices, a segmentation-
@@ -924,32 +1022,25 @@ def analyze_image():
     undertone = "Unknown"
     skin_confidence = 0.0
 
-    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5) as face_mesh:
-        results_face = face_mesh.process(rgb)
+    lm_pixels = locate_face_landmarks(image, rgb, pose_results=results)
 
-        if results_face.multi_face_landmarks:
-            face_landmarks = results_face.multi_face_landmarks[0]
+    if lm_pixels is not None:
+        face_shape, face_confidence, face_warnings = classify_face_shape(lm_pixels, image, hair_mask=hair_mask)
+        skin_tone, undertone, skin_confidence, skin_warnings = classify_skin_tone(image, lm_pixels, skin_mask=skin_mask)
 
-            h, w, _ = image.shape
-            lm_pixels = {}
-            for idx, lm in enumerate(face_landmarks.landmark):
-                lm_pixels[idx] = (int(lm.x * w), int(lm.y * h))
+        face_confidence = float(np.clip(face_confidence * exposure_factor, 0.05, 0.95))
+        skin_confidence = float(np.clip(skin_confidence * exposure_factor, 0.05, 0.95))
 
-            face_shape, face_confidence, face_warnings = classify_face_shape(lm_pixels, image, hair_mask=hair_mask)
-            skin_tone, undertone, skin_confidence, skin_warnings = classify_skin_tone(image, lm_pixels, skin_mask=skin_mask)
-
-            face_confidence = float(np.clip(face_confidence * exposure_factor, 0.05, 0.95))
-            skin_confidence = float(np.clip(skin_confidence * exposure_factor, 0.05, 0.95))
-
-            quality_warnings.extend(face_warnings)
-            quality_warnings.extend(skin_warnings)
-        else:
-            quality_warnings.append("No face detected; face shape and skin tone are unavailable for this photo.")
+        quality_warnings.extend(face_warnings)
+        quality_warnings.extend(skin_warnings)
+    else:
+        quality_warnings.append("No face detected; face shape and skin tone are unavailable for this photo.")
 
     # =====================================================
     # 🟢 PART 3: OUTFIT DETECTION (SegFormer garment classes)
     # =====================================================
     outfits = detect_outfits(image, label_map=label_map, confidence_map=confidence_map)
+    person_rgba = outfits.pop("person_rgba", None)
     outfits = enrich_outfits_with_attributes(outfits)
 
     # =====================================================
@@ -1018,6 +1109,7 @@ def analyze_image():
         "measurements": measurements,
         "quality_warnings": quality_warnings,
         "outfits": outfits,
+        "person_rgba": person_rgba,
         "styling_recommendations": styling_recommendations,
         "recommended_looks": recommendation["looks"],
         "styling": recommendation["styling"],
@@ -1067,38 +1159,30 @@ def analyze_face_only():
         hair_mask = None
 
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    lm_pixels = locate_face_landmarks(image, rgb)
 
-    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5) as face_mesh:
-        results_face = face_mesh.process(rgb)
+    if lm_pixels is None:
+        quality_warnings.append(
+            "No face detected in this photo either -- try a well-lit, front-facing selfie "
+            "without sunglasses, a hat, or heavy shadow."
+        )
+        return jsonify({
+            "face_shape": "Unknown",
+            "face_shape_confidence": 0.0,
+            "skin_tone": "Unknown",
+            "undertone": "Unknown",
+            "skin_confidence": 0.0,
+            "quality_warnings": quality_warnings,
+        })
 
-        if not results_face.multi_face_landmarks:
-            quality_warnings.append(
-                "No face detected in this photo either -- try a well-lit, front-facing selfie "
-                "without sunglasses, a hat, or heavy shadow."
-            )
-            return jsonify({
-                "face_shape": "Unknown",
-                "face_shape_confidence": 0.0,
-                "skin_tone": "Unknown",
-                "undertone": "Unknown",
-                "skin_confidence": 0.0,
-                "quality_warnings": quality_warnings,
-            })
+    face_shape, face_confidence, face_warnings = classify_face_shape(lm_pixels, image, hair_mask=hair_mask)
+    skin_tone, undertone, skin_confidence, skin_warnings = classify_skin_tone(image, lm_pixels, skin_mask=skin_mask)
 
-        face_landmarks = results_face.multi_face_landmarks[0]
-        h, w, _ = image.shape
-        lm_pixels = {}
-        for idx, lm in enumerate(face_landmarks.landmark):
-            lm_pixels[idx] = (int(lm.x * w), int(lm.y * h))
+    face_confidence = float(np.clip(face_confidence * exposure_factor, 0.05, 0.95))
+    skin_confidence = float(np.clip(skin_confidence * exposure_factor, 0.05, 0.95))
 
-        face_shape, face_confidence, face_warnings = classify_face_shape(lm_pixels, image, hair_mask=hair_mask)
-        skin_tone, undertone, skin_confidence, skin_warnings = classify_skin_tone(image, lm_pixels, skin_mask=skin_mask)
-
-        face_confidence = float(np.clip(face_confidence * exposure_factor, 0.05, 0.95))
-        skin_confidence = float(np.clip(skin_confidence * exposure_factor, 0.05, 0.95))
-
-        quality_warnings.extend(face_warnings)
-        quality_warnings.extend(skin_warnings)
+    quality_warnings.extend(face_warnings)
+    quality_warnings.extend(skin_warnings)
 
     return jsonify({
         "face_shape": face_shape,
