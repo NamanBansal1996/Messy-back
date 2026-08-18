@@ -9,7 +9,7 @@ Requires SUPABASE_URL and SUPABASE_SECRET_KEY in the environment (see
 .env.example). The secret key is required (not the publishable/anon
 key) because writes here need to bypass Row Level Security.
 
-The two tables (catalog_items, styling_catalog) are NOT created by this
+These tables (catalog_items, shirts, jeans, tops) are NOT created by this
 file -- supabase-py talks to PostgREST, which can't run arbitrary DDL.
 Create them once via the Supabase SQL Editor using schema.sql, then run
 migrate_catalog_to_db.py to populate them.
@@ -54,10 +54,9 @@ def row_to_catalog_item(row):
     }
 
 
-def row_to_styling_item(row):
-    item = {
+def _base_garment_fields(row):
+    return {
         "item_id": row["item_id"],
-        "garment_type": row["garment_type"],
         "gender": row["gender"],
         "name": row["name"],
         "type": row["type"],
@@ -70,10 +69,25 @@ def row_to_styling_item(row):
         "occasion": row["occasion"] or [],
         "image": row["image"],
     }
-    if row["garment_type"] == "shirt":
-        item["collar"] = row["collar"]
-        item["sleeve"] = row["sleeve"]
-        item["season"] = row["season"] or []
-    elif row["garment_type"] == "jeans":
-        item["rise"] = row["rise"]
+
+
+def row_to_shirt(row):
+    item = _base_garment_fields(row)
+    item["collar"] = row["collar"]
+    item["sleeve"] = row["sleeve"]
+    item["season"] = row["season"] or []
+    return item
+
+
+def row_to_jeans_item(row):
+    item = _base_garment_fields(row)
+    item["rise"] = row["rise"]
+    return item
+
+
+def row_to_top(row):
+    item = _base_garment_fields(row)
+    item["sleeve"] = row["sleeve"]
+    item["neckline"] = row["neckline"]
+    item["properties"] = row["properties"] or []
     return item

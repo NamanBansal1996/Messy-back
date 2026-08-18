@@ -1,0 +1,19 @@
+[
+  {
+    "item_id": "top_001",
+    "name": "White Ribbed Tank Top",
+    "type": "tank",
+    "color": "white",
+    "pattern": "solid",
+    "fit": "snug",
+    "length": "regular",
+    "neckline": "boat_neck",
+    "sleeve": "sleeveless",
+    "fabric": "rib_knit",
+    "properties": ["breathable", "stretchable", "non_transparent"],
+    "style": ["minimal", "smart_casual"],
+    "occasion": ["office", "casual", "outing"],
+    "season": ["spring", "summer", "autumn"],
+    "image": "fablestreetwhitetanktop.webp"
+  }
+]

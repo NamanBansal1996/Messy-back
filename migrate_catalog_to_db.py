@@ -27,6 +27,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CATALOG_ITEMS_FILE = os.path.join(BASE_DIR, "catalog_data.json")
 FEMALE_SHIRTS_FILE = os.path.join(BASE_DIR, "catalog", "female", "fshirt", "female_shirts.json")
 FEMALE_JEANS_FILE = os.path.join(BASE_DIR, "catalog", "female", "fjeans", "female_jeans.json")
+FEMALE_TOPS_FILE = os.path.join(BASE_DIR, "catalog", "female", "ftop", "female_tops.json")
 
 
 def _load_json(path):
@@ -44,34 +45,62 @@ def migrate_catalog_items(client):
     print(f"  catalog_items: upserted {len(items)} row(s)")
 
 
-def migrate_styling_catalog(client, path, garment_type, gender):
+def _base_row(item, gender):
+    return {
+        "item_id": item.get("item_id"),
+        "gender": gender,
+        "name": item.get("name"),
+        "type": item.get("type"),
+        "color": item.get("color"),
+        "pattern": item.get("pattern"),
+        "fit": item.get("fit"),
+        "length": item.get("length"),
+        "fabric": item.get("fabric"),
+        "style": item.get("style") or [],
+        "occasion": item.get("occasion") or [],
+        "image": item.get("image"),
+    }
+
+
+def migrate_shirts(client, path, gender):
     items = _load_json(path)
     rows = []
     for item in items:
-        rows.append(
-            {
-                "item_id": item.get("item_id"),
-                "garment_type": garment_type,
-                "gender": gender,
-                "name": item.get("name"),
-                "type": item.get("type"),
-                "color": item.get("color"),
-                "pattern": item.get("pattern"),
-                "fit": item.get("fit"),
-                "length": item.get("length"),
-                "fabric": item.get("fabric"),
-                "collar": item.get("collar"),
-                "sleeve": item.get("sleeve"),
-                "rise": item.get("rise"),
-                "style": item.get("style") or [],
-                "occasion": item.get("occasion") or [],
-                "season": item.get("season") or [],
-                "image": item.get("image"),
-            }
-        )
+        row = _base_row(item, gender)
+        row["collar"] = item.get("collar")
+        row["sleeve"] = item.get("sleeve")
+        row["season"] = item.get("season") or []
+        rows.append(row)
     if rows:
-        client.table("styling_catalog").upsert(rows).execute()
-    print(f"  styling_catalog ({garment_type}): upserted {len(rows)} row(s)")
+        client.table("shirts").upsert(rows).execute()
+    print(f"  shirts: upserted {len(rows)} row(s)")
+
+
+def migrate_jeans(client, path, gender):
+    items = _load_json(path)
+    rows = []
+    for item in items:
+        row = _base_row(item, gender)
+        row["rise"] = item.get("rise")
+        rows.append(row)
+    if rows:
+        client.table("jeans").upsert(rows).execute()
+    print(f"  jeans: upserted {len(rows)} row(s)")
+
+
+def migrate_tops(client, path, gender):
+    items = _load_json(path)
+    rows = []
+    for item in items:
+        row = _base_row(item, gender)
+        row["sleeve"] = item.get("sleeve")
+        row["neckline"] = item.get("neckline")
+        row["properties"] = item.get("properties") or []
+        row["season"] = item.get("season") or []
+        rows.append(row)
+    if rows:
+        client.table("tops").upsert(rows).execute()
+    print(f"  tops: upserted {len(rows)} row(s)")
 
 
 def main():
@@ -80,11 +109,15 @@ def main():
     print("Migrating catalog_data.json -> catalog_items...")
     migrate_catalog_items(client)
 
-    print("Migrating female_shirts.json -> styling_catalog...")
-    migrate_styling_catalog(client, FEMALE_SHIRTS_FILE, garment_type="shirt", gender="Female")
+    # Female only for now -- male catalog folders don't exist yet.
+    print("Migrating female_shirts.json -> shirts...")
+    migrate_shirts(client, FEMALE_SHIRTS_FILE, gender="Female")
 
-    print("Migrating female_jeans.json -> styling_catalog...")
-    migrate_styling_catalog(client, FEMALE_JEANS_FILE, garment_type="jeans", gender="Female")
+    print("Migrating female_jeans.json -> jeans...")
+    migrate_jeans(client, FEMALE_JEANS_FILE, gender="Female")
+
+    print("Migrating female_tops.json -> tops...")
+    migrate_tops(client, FEMALE_TOPS_FILE, gender="Female")
 
     print("Done.")
 
