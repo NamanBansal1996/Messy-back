@@ -160,6 +160,38 @@
           "Choose mid-rise or high-rise jeans to help define the waist and create a more balanced overall silhouette."
         ]
       },
+      "shirt_fits": {
+        "recommended_items": [
+          {
+            "type": "relaxed",
+            "advice": "A relaxed shirt softens the visual weight of broader shoulders."
+          },
+          {
+            "type": "oversized",
+            "advice": "An oversized shirt de-emphasizes shoulder width for a more balanced look."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "fitted",
+            "advice": "A fitted, structured shirt can emphasize shoulder width."
+          }
+        ]
+      },
+      "top_fits": {
+        "recommended_items": [
+          {
+            "type": "comfort",
+            "advice": "A comfort fit softens the shoulder area."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "snug",
+            "advice": "A snug fit through the shoulders can emphasize their width."
+          }
+        ]
+      },
       "skirts": {
         "recommended_items": [
           {

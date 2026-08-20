@@ -19,7 +19,7 @@ from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_
 from styling_rules import get_styling_recommendations
 from virtual_tryon import generate_tryon
 from recommendation_engine import generate_three_looks
-from catalog import get_catalog_items
+from catalog import get_catalog_items, get_styling_catalog_items
 from weather_service import get_current_weather
 from segformer_parser import parse_human, get_person_mask, get_skin_mask, get_hair_mask
 
@@ -1092,7 +1092,11 @@ def analyze_image():
         item for category_items in outfits.values() if isinstance(category_items, list) for item in category_items
     ]
     wardrobe_items = get_user_closet(user_id)
-    catalog_items = get_catalog_items(gender=gender)
+    # Two separate, unrelated catalog sources: the original 7-item "Shop the
+    # Look" seed data (real affiliate links, source_ref-based) and the
+    # richer shirts/jeans/tops tables (body-shape/undertone scoring data,
+    # image_b64-based) -- both are valid look candidates, so both go in.
+    catalog_items = get_catalog_items(gender=gender) + get_styling_catalog_items(gender=gender)
     recommendation = generate_three_looks(profile, current_outfit_items, wardrobe_items, catalog_items, request_id=filename)
 
     # ---------------- FINAL RESPONSE ----------------

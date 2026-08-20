@@ -98,14 +98,56 @@
         "avoid": []
       },
       "jeans": {
-        "do": [
-          "Straight",
-          "Bootcut",
-          "Flare leg",
-          "High/mid-rise",
-          "Wide-leg"
+        "recommended_items": [
+          {
+            "type": "bootcut",
+            "advice": "Bootcut jeans balance fuller hips and thighs by adding gentle flare below the knee rather than clinging tightly."
+          },
+          {
+            "type": "wide_leg",
+            "advice": "Wide-leg jeans skim over the hips and thighs, creating a balanced line from waist to hem."
+          },
+          {
+            "type": "straight",
+            "advice": "Straight-leg jeans provide a clean drop from hip to hem without adding extra volume where you already have curves."
+          }
         ],
-        "avoid": []
+        "avoid_items": [
+          {
+            "type": "skinny",
+            "advice": "Skinny jeans can cling to fuller hips and thighs, drawing attention to the widest part of your frame -- a relaxed leg through the hip balances things better."
+          }
+        ],
+        "general_advice": [
+          "Choose high or mid-rise jeans to define your waist, and look for flare details at the hem to keep your lower half in proportion."
+        ]
+      },
+      "shirt_fits": {
+        "recommended_items": [
+          {
+            "type": "fitted",
+            "advice": "A fitted, structured top balances narrower shoulders against fuller hips."
+          },
+          {
+            "type": "classic",
+            "advice": "A classic shirt adds definition up top, drawing the eye upward."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "oversized",
+            "advice": "An oversized top makes narrower shoulders look even smaller relative to your hips."
+          }
+        ]
+      },
+      "top_fits": {
+        "recommended_items": [
+          {
+            "type": "snug",
+            "advice": "A snug fit on top helps balance narrower shoulders against fuller hips."
+          }
+        ],
+        "avoid_items": []
       },
       "skirts": {
         "do": [

@@ -155,15 +155,60 @@
         ]
       },
       "jeans": {
-        "do": [
-          "Straight",
-          "Bootleg",
-          "Wide",
-          "Slim",
-          "Flared",
-          "High/mid-rise"
+        "recommended_items": [
+          {
+            "type": "straight",
+            "advice": "Straight-leg jeans create a clean, streamlined silhouette that complements your naturally balanced proportions."
+          },
+          {
+            "type": "bootcut",
+            "advice": "Bootcut jeans gently flare below the knee, balancing your curves while creating an elegant line."
+          },
+          {
+            "type": "wide_leg",
+            "advice": "Wide-leg jeans drape beautifully from the hips, maintaining your balanced proportions while adding graceful movement."
+          },
+          {
+            "type": "skinny",
+            "advice": "Slim-fit jeans follow your natural curves without being too tight, maintaining your balanced silhouette."
+          }
         ],
-        "avoid": []
+        "avoid_items": [
+          {
+            "type": "baggy",
+            "advice": "Avoid baggy jeans, as they can hide your natural curves and make your silhouette appear less defined."
+          }
+        ],
+        "general_advice": [
+          "Choose high or mid-rise jeans to highlight your defined waist."
+        ]
+      },
+      "shirt_fits": {
+        "recommended_items": [
+          {
+            "type": "fitted",
+            "advice": "A fitted shirt defines your waist and follows your natural curves."
+          },
+          {
+            "type": "classic",
+            "advice": "A tailored, classic cut still shows your shape while looking polished."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "oversized",
+            "advice": "An oversized shirt can hide your defined waist and create a shapeless silhouette."
+          }
+        ]
+      },
+      "top_fits": {
+        "recommended_items": [
+          {
+            "type": "snug",
+            "advice": "A snug fit follows your natural waist definition."
+          }
+        ],
+        "avoid_items": []
       },
       "skirts": {
         "do": [

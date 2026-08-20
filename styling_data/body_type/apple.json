@@ -120,13 +120,61 @@
         ]
       },
       "jeans": {
-        "do": [
-          "Skinny jeans",
-          "Wide-leg jeans",
-          "Straight jeans",
-          "Flared jeans"
+        "recommended_items": [
+          {
+            "type": "skinny",
+            "advice": "Skinny jeans keep the focus on your legs, balancing a fuller midsection with a streamlined lower half."
+          },
+          {
+            "type": "wide_leg",
+            "advice": "Wide-leg jeans create a relaxed, elongated line that draws the eye away from the waist."
+          },
+          {
+            "type": "straight",
+            "advice": "Straight-leg jeans offer a clean, balanced silhouette without adding volume at the waistband."
+          }
         ],
-        "avoid": []
+        "avoid_items": [
+          {
+            "type": "baggy",
+            "advice": "Avoid baggy jeans through the leg -- paired with a fuller midsection, they can read as shapeless overall."
+          }
+        ],
+        "general_advice": [
+          "Look for a comfortable, non-restrictive waistband rather than a tight high-rise that digs in at the midsection."
+        ]
+      },
+      "shirt_fits": {
+        "recommended_items": [
+          {
+            "type": "relaxed",
+            "advice": "A relaxed shirt skims over the midsection instead of clinging to it."
+          },
+          {
+            "type": "oversized",
+            "advice": "An oversized shirt stays flowy through the body while still looking put-together."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "fitted",
+            "advice": "A fitted shirt clings to the midsection and can look unflattering."
+          }
+        ]
+      },
+      "top_fits": {
+        "recommended_items": [
+          {
+            "type": "comfort",
+            "advice": "A comfort fit skims over the midsection rather than clinging."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "snug",
+            "advice": "A snug fit can cling to the midsection."
+          }
+        ]
       },
       "skirts": {
         "do": [

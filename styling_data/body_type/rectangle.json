@@ -126,14 +126,55 @@
         "avoid": []
       },
       "jeans": {
-        "do": [
-          "Slim",
-          "Straight",
-          "Bootcut",
-          "Wide leg",
-          "Trouser style"
+        "recommended_items": [
+          {
+            "type": "skinny",
+            "advice": "Slim, straight-leg jeans keep your straight silhouette clean without adding bulk."
+          },
+          {
+            "type": "straight",
+            "advice": "Straight-leg jeans follow your naturally straight line for an effortless, elongated look."
+          },
+          {
+            "type": "bootcut",
+            "advice": "Bootcut jeans gently flare below the knee, creating the illusion of curves along a straight frame."
+          },
+          {
+            "type": "wide_leg",
+            "advice": "Wide-leg jeans add volume and movement, balancing a straight torso with a fuller silhouette below."
+          }
         ],
-        "avoid": []
+        "avoid_items": [],
+        "general_advice": [
+          "Trouser-style detailing -- front pleats, a tailored waistband -- adds structure and definition to a straight silhouette."
+        ]
+      },
+      "shirt_fits": {
+        "recommended_items": [
+          {
+            "type": "fitted",
+            "advice": "A fitted cut creates definition along your straight silhouette instead of skimming past it."
+          },
+          {
+            "type": "classic",
+            "advice": "A classic, structured shirt keeps clean lines that suit your straight frame."
+          }
+        ],
+        "avoid_items": [
+          {
+            "type": "oversized",
+            "advice": "An oversized shirt can hide the shape you already have -- a fitted or classic cut works harder for you."
+          }
+        ]
+      },
+      "top_fits": {
+        "recommended_items": [
+          {
+            "type": "snug",
+            "advice": "A snug fit shows off your straight, lean line."
+          }
+        ],
+        "avoid_items": []
       }
     }
   }

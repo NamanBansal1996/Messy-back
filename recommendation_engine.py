@@ -165,6 +165,101 @@ def _normalize_body_key(body_type):
     return key
 
 
+def _normalize_type_string(value):
+    """Same normalization styling_rules.py already applies, kept consistent
+    here (see _normalize_body_key above for why this file duplicates small
+    pure helpers instead of importing them)."""
+    if not value:
+        return ""
+    return value.lower().replace("_", " ").replace("-", " ").strip()
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Silhouette-level body-shape matching -- reads styling_data/body_type/
+# <key>.json's per-category recommended_items/avoid_items (jeans silhouette
+# + rise, shirt/top fit), matching a garment's type/fit/subcategory against
+# them. This is a finer signal than BODY_SHAPE_LABEL_PREFERENCE below (which
+# only knows "jeans" vs "skirt" vs "jacket" at the category/label level, not
+# "bootcut" vs "skinny"). Content lives in styling_data/, not here -- same
+# separation already used for undertone content via _load_undertone_style.
+# ─────────────────────────────────────────────────────────────────────────
+_BODY_TYPE_STYLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "styling_data", "body_type")
+_body_type_style_cache = {}
+
+_VALID_BODY_KEYS = {"inverted_triangle", "rectangle", "hourglass", "triangle", "apple"}
+
+# (garment category, garment label) -> which style_guide key holds its
+# silhouette guidance. Matches exactly how catalog.py shapes shirts/jeans/
+# tops rows (category="bottom"/label="jeans", category="top"/label="shirt"
+# or "tshirt").
+_SILHOUETTE_CATEGORY_KEY = {
+    ("bottom", "jeans"): "jeans",
+    ("top", "shirt"): "shirt_fits",
+    ("top", "tshirt"): "top_fits",
+}
+
+
+def _load_body_type_style(body_type):
+    key = _normalize_body_key(body_type)
+    if key not in _VALID_BODY_KEYS:
+        return {}
+    if key in _body_type_style_cache:
+        return _body_type_style_cache[key]
+    path = os.path.join(_BODY_TYPE_STYLE_DIR, f"{key}.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r") as f:
+        data = json.load(f)
+    style_guide = data.get("style_guide", {}).get("Female", {})
+    _body_type_style_cache[key] = style_guide
+    return style_guide
+
+
+def _silhouette_bonus(garment, body_type):
+    """
+    Matches a garment's type/fit (catalog items) or subcategory/fit
+    (current-request items enriched by garment_classifier.py -- see
+    styling_rules.py's _match_current_item_to_style_guide, which reads the
+    same two fields) against this body type's recommended_items/
+    avoid_items, via the same normalize+substring approach styling_rules.py
+    already uses. Older persisted wardrobe items don't carry these fields
+    at all (closet_manager.py doesn't save them) so this correctly falls
+    through to a neutral (0.0, None) for them, not a crash or false match.
+    """
+    style_guide = _load_body_type_style(body_type)
+    if not style_guide:
+        return 0.0, None
+
+    guide_key = _SILHOUETTE_CATEGORY_KEY.get((garment.get("category"), (garment.get("label") or "").lower()))
+    if not guide_key:
+        return 0.0, None
+
+    category_data = style_guide.get(guide_key)
+    if not category_data:
+        return 0.0, None
+
+    candidates = [c for c in (
+        _normalize_type_string(garment.get("type")),
+        _normalize_type_string(garment.get("fit")),
+        _normalize_type_string(garment.get("subcategory")),
+    ) if c]
+    if not candidates:
+        return 0.0, None
+
+    for entry in category_data.get("recommended_items", []):
+        entry_type = _normalize_type_string(entry.get("type"))
+        if entry_type and any(entry_type in c or c in entry_type for c in candidates):
+            display = entry_type.title()
+            return 1.0, entry.get("advice") or f"{display} suits your {body_type} shape"
+
+    for entry in category_data.get("avoid_items", []):
+        entry_type = _normalize_type_string(entry.get("type"))
+        if entry_type and any(entry_type in c or c in entry_type for c in candidates):
+            return -0.8, entry.get("advice") or None
+
+    return 0.0, None
+
+
 # ─────────────────────────────────────────────────────────────────────────
 # Color helpers
 # ─────────────────────────────────────────────────────────────────────────
@@ -270,6 +365,26 @@ def color_harmony_bonus(hex_a, hex_b, prefer_contrast=False):
 # ─────────────────────────────────────────────────────────────────────────
 
 def _body_shape_bonus(garment, body_type):
+    """
+    Two signals, in strict priority order -- NOT combined by magnitude:
+      1. Specific silhouette match against styling_data/body_type/*.json
+         (bootcut/wide_leg/fitted/oversized/etc -- _silhouette_bonus above).
+         If the garment's exact type/fit is listed in that body type's
+         recommended_items OR avoid_items, that verdict wins outright.
+      2. Coarse category/label preference (jacket/sweater/skirt/trousers --
+         BODY_SHAPE_LABEL_PREFERENCE, the original logic) -- used ONLY when
+         the silhouette check found nothing specific to say.
+    A magnitude comparison would let a strong generic positive (e.g. "jeans
+    suit a Triangle body" at +1.0) bury a specific negative (e.g. "but not
+    skinny ones" at -0.8) just because it's numerically bigger -- verified
+    against real data: skinny jeans for a Triangle profile scored positive
+    under magnitude comparison despite being an explicit avoid_items entry.
+    Presence, not size, decides which signal applies.
+    """
+    silhouette_score, silhouette_reason = _silhouette_bonus(garment, body_type)
+    if silhouette_score != 0.0:
+        return silhouette_score, silhouette_reason
+
     key = _normalize_body_key(body_type)
     rules = BODY_SHAPE_LABEL_PREFERENCE.get(key)
     if not rules:

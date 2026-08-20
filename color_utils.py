@@ -216,6 +216,34 @@ _PALETTE_LAB = cv2.cvtColor(_palette_bgr_array, cv2.COLOR_BGR2LAB)[0].astype(np.
 _LIGHTNESS_WEIGHT = 0.5
 
 
+# Catalog-only color terms not in the main palette above (denim washes
+# aren't a real-world garment color anyone else needed a name for yet).
+_EXTRA_COLOR_HEX = {
+    "Dark Indigo": (28, 33, 66),
+    "Medium Indigo": (58, 74, 122),
+    "Dark Blue": (20, 40, 90),  # same as Navy Blue -- catalog uses both terms for the same shade
+}
+
+
+def get_hex_for_color_name(color_name):
+    """
+    Reverse of get_color_name() -- given a catalog color string (any of
+    "dark_indigo", "Dark Indigo", "dark-indigo"), returns its "#rrggbb" hex
+    approximation, reusing the same _COLOR_PALETTE_RGB every other color
+    lookup in this file already draws from (one source of truth, not a
+    second divergent color list). Returns None for anything unrecognized
+    rather than guessing -- callers should treat that as "no color harmony
+    signal available for this item," not silently score it as gray.
+    """
+    if not color_name:
+        return None
+    key = color_name.replace("_", " ").replace("-", " ").strip().title()
+    rgb = _COLOR_PALETTE_RGB.get(key) or _EXTRA_COLOR_HEX.get(key)
+    if rgb is None:
+        return None
+    return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+
 def get_color_name(bgr_pixel):
     """
     Given a single BGR color (uint8 3-tuple/array), returns the name of the
