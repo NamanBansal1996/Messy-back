@@ -79,6 +79,64 @@ CREATE TABLE IF NOT EXISTS tops (
     image      TEXT
 );
 
+CREATE TABLE IF NOT EXISTS dresses (
+    item_id    TEXT PRIMARY KEY,
+    gender     TEXT,
+    name       TEXT,
+    type       TEXT,
+    color      TEXT,
+    pattern    TEXT,
+    fit        TEXT,
+    length     TEXT,
+    neckline   TEXT,
+    sleeve     TEXT,
+    fabric     TEXT,
+    properties JSONB,
+    pockets    INTEGER,
+    style      JSONB,
+    occasion   JSONB,
+    season     JSONB,
+    image      TEXT
+);
+
+CREATE TABLE IF NOT EXISTS skirts (
+    item_id    TEXT PRIMARY KEY,
+    gender     TEXT,
+    name       TEXT,
+    type       TEXT,
+    color      TEXT,
+    pattern    TEXT,
+    fit        TEXT,
+    length     TEXT,
+    rise       TEXT,
+    fabric     TEXT,
+    properties JSONB,
+    pockets    INTEGER,
+    style      JSONB,
+    occasion   JSONB,
+    season     JSONB,
+    image      TEXT
+);
+
+CREATE TABLE IF NOT EXISTS trousers (
+    item_id    TEXT PRIMARY KEY,
+    gender     TEXT,
+    name       TEXT,
+    type       TEXT,
+    color      TEXT,
+    pattern    TEXT,
+    fit        TEXT,
+    length     TEXT,
+    rise       TEXT,
+    fabric     TEXT,
+    properties JSONB,
+    pockets    INTEGER,
+    style      JSONB,
+    occasion   JSONB,
+    season     JSONB,
+    image      TEXT
+);
+
 -- These tables are only ever written to by the backend (via the secret
 -- key, which bypasses RLS), so Row Level Security stays off -- there's
 -- no direct client/browser access path to lock down.

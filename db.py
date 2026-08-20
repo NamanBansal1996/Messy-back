@@ -91,3 +91,31 @@ def row_to_top(row):
     item["neckline"] = row["neckline"]
     item["properties"] = row["properties"] or []
     return item
+
+
+def row_to_dress(row):
+    item = _base_garment_fields(row)
+    item["neckline"] = row["neckline"]
+    item["sleeve"] = row["sleeve"]
+    item["properties"] = row["properties"] or []
+    item["pockets"] = row["pockets"]
+    item["season"] = row["season"] or []
+    return item
+
+
+def row_to_skirt(row):
+    item = _base_garment_fields(row)
+    item["rise"] = row["rise"]
+    item["properties"] = row["properties"] or []
+    item["pockets"] = row["pockets"]
+    item["season"] = row["season"] or []
+    return item
+
+
+def row_to_trouser(row):
+    item = _base_garment_fields(row)
+    item["rise"] = row["rise"]
+    item["properties"] = row["properties"] or []
+    item["pockets"] = row["pockets"]
+    item["season"] = row["season"] or []
+    return item

@@ -1,162 +1,274 @@
 [
   {
     "item_id": "shirt_001",
-    "name": "White Classic Oxford Shirt",
+    "name": "White floral regular Shirt",
     "type": "classic",
-    "color": "white",
-    "pattern": "solid",
+    "color": "light blue",
+    "pattern": "floral",
     "fit": "regular",
     "length": "regular",
-    "collar": "point",
-    "sleeve": "full",
+    "collar": "neck collar",
+    "sleevelength": "half",
     "fabric": "cotton",
-    "style": ["classic", "smart_casual"],
-    "occasion": ["office", "casual", "college", "outing"],
-    "season": ["spring", "summer", "autumn", "winter"],
-    "image": "shirt_001.jpg"
+    "style": [
+      "classic",
+      "smart_casual"
+    ],
+    "occasion": [
+      "office",
+      "casual",
+      "college",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "summer"
+    ],
+    "image": "female/fshirt/womenregularshirt.jpg.webp"
   },
   {
     "item_id": "shirt_002",
-    "name": "Black Fitted Shirt",
+    "name": "off white striped Shirt",
     "type": "fitted",
-    "color": "black",
-    "pattern": "solid",
-    "fit": "fitted",
+    "color": "offwhite",
+    "pattern": "striped",
+    "fit": "regular",
     "length": "regular",
     "collar": "spread",
-    "sleeve": "full",
+    "sleevelength": "full",
     "fabric": "cotton",
-    "style": ["elegant", "formal", "smart_casual"],
-    "occasion": ["office", "date", "party", "outing"],
-    "season": ["spring", "autumn", "winter"],
-    "image": "shirt_002.jpg"
+    "style": [
+      "elegant",
+      "formal",
+      "smart_casual"
+    ],
+    "occasion": [
+      "office",
+      "date",
+      "party",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "autumn",
+      "winter"
+    ],
+    "image": "female/fshirt/women_stripedshirt.jpg.webp"
   },
   {
     "item_id": "shirt_003",
-    "name": "Light Blue Oversized Shirt",
-    "type": "oversized",
-    "color": "light_blue",
-    "pattern": "solid",
-    "fit": "oversized",
-    "length": "long",
-    "collar": "point",
-    "sleeve": "full",
+    "name": "black striped Shirt",
+    "type": "fitted",
+    "color": "black",
+    "pattern": "striped",
+    "fit": "regular",
+    "length": "regular",
+    "collar": "spread",
+    "sleevelength": "full",
     "fabric": "cotton",
-    "style": ["casual", "relaxed"],
-    "occasion": ["casual", "college", "outing"],
-    "season": ["spring", "summer"],
-    "image": "shirt_003.jpg"
+    "style": [
+      "elegant",
+      "formal",
+      "smart_casual"
+    ],
+    "occasion": [
+      "office",
+      "date",
+      "party",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "autumn",
+      "winter"
+    ],
+    "image": "female/fshirt/womenblackstriped.jpg.webp"
   },
   {
     "item_id": "shirt_004",
-    "name": "Blue Striped Shirt",
-    "type": "classic",
-    "color": "blue",
-    "pattern": "vertical_stripe",
-    "fit": "regular",
-    "length": "regular",
-    "collar": "point",
-    "sleeve": "full",
+    "name": "Pink Checkered Relaxed Fit Shirt",
+    "type": "button-down",
+    "color": "pink",
+    "pattern": "check",
+    "fit": "relaxed",
+    "length": "long",
+    "collar": "spread",
+    "sleevelength": "full",
     "fabric": "cotton",
-    "style": ["classic", "smart_casual"],
-    "occasion": ["office", "college", "casual", "outing"],
-    "season": ["spring", "summer", "autumn"],
-    "image": "shirt_004.jpg"
+    "style": [
+      "casual",
+      "relaxed"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "summer"
+    ],
+    "image": "female/fshirt/womenpinkcheck.jpg.webp"
   },
   {
     "item_id": "shirt_005",
-    "name": "Pink Fitted Shirt",
-    "type": "fitted",
-    "color": "pink",
-    "pattern": "solid",
-    "fit": "fitted",
-    "length": "regular",
-    "collar": "point",
-    "sleeve": "full",
+    "name": "Green Checkered Relaxed Fit Shirt",
+    "type": "button-down",
+    "color": "green",
+    "pattern": "check",
+    "fit": "relaxed",
+    "length": "long",
+    "collar": "spread",
+    "sleevelength": "full",
     "fabric": "cotton",
-    "style": ["elegant", "smart_casual"],
-    "occasion": ["office", "date", "outing"],
-    "season": ["spring", "summer"],
-    "image": "shirt_005.jpg"
+    "style": [
+      "casual",
+      "relaxed"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "summer"
+    ],
+    "image": "female/fshirt/womengreencheckshirt.jpg.webp"
   },
   {
     "item_id": "shirt_006",
-    "name": "Denim Shirt",
+    "name": "peach Shirt",
     "type": "classic",
-    "color": "dark_blue",
+    "color": "peach",
+    "pattern": "self",
+    "fit": "regular",
+    "length": "hiplength",
+    "collar": "neck",
+    "sleevelength": "full",
+    "sleeve": "puff",
+    "fabric": "cotton cambric",
+    "style": [
+      "classic",
+      "smart_casual"
+    ],
+    "occasion": [
+      "office",
+      "college",
+      "casual",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "summer",
+      "autumn"
+    ],
+    "image": "female/fshirt/womenpeachshirt.jpg.webp"
+  },
+  {
+    "item_id": "shirt_007",
+    "name": "Blue Denim Shirt",
+    "type": "fitted",
+    "color": "pink",
     "pattern": "solid",
     "fit": "regular",
     "length": "regular",
     "collar": "spread",
-    "sleeve": "full",
+    "sleevelength": "half",
     "fabric": "denim",
-    "style": ["casual", "rugged"],
-    "occasion": ["casual", "college", "outing"],
-    "season": ["spring", "autumn", "winter"],
-    "image": "shirt_006.jpg"
-  },
-  {
-    "item_id": "shirt_007",
-    "name": "Linen Relaxed Shirt",
-    "type": "relaxed",
-    "color": "beige",
-    "pattern": "solid",
-    "fit": "relaxed",
-    "length": "regular",
-    "collar": "camp",
-    "sleeve": "short",
-    "fabric": "linen",
-    "style": ["casual", "minimal", "relaxed"],
-    "occasion": ["casual", "outing", "vacation"],
-    "season": ["spring", "summer"],
-    "image": "shirt_007.jpg"
+    "style": [
+      "elegant",
+      "smart_casual"
+    ],
+    "occasion": [
+      "date",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "summer"
+    ],
+    "image": "female/fshirt/womendenimshirt.jpg.webp"
   },
   {
     "item_id": "shirt_008",
-    "name": "Black Oversized Shirt",
-    "type": "oversized",
-    "color": "black",
+    "name": "women red ribbed Shirt",
+    "type": "classic",
+    "color": "red",
+    "pattern": "ribbed",
+    "fit": "slim",
+    "length": "regular",
+    "collar": "polo",
+    "sleevelength": "half",
+    "fabric": "cotton",
+    "style": [
+      "casual",
+      "rugged"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "autumn",
+      "winter"
+    ],
+    "image": "female/fshirt/womenribbedshirt.jpg.webp"
+  },
+  {
+    "item_id": "shirt_009",
+    "name": "solid beige Shirt",
+    "type": "relaxed",
+    "color": "beige",
     "pattern": "solid",
-    "fit": "oversized",
+    "fit": "regular",
+    "length": "regular",
+    "collar": "spread",
+    "sleevelength": "full",
+    "fabric": "cotton",
+    "style": [
+      "casual",
+      "minimal",
+      "relaxed"
+    ],
+    "occasion": [
+      "casual",
+      "outing",
+      "vacation"
+    ],
+    "season": [
+      "spring",
+      "summer"
+    ],
+    "image": "female/fshirt/womenbeigeshirt.jpg.webp"
+  },
+  {
+    "item_id": "shirt_010",
+    "name": "navy blue poplin Shirt",
+    "type": "oversized",
+    "color": "navy blue",
+    "pattern": "solid",
+    "fit": "relaxed",
     "length": "long",
     "collar": "spread",
     "sleeve": "full",
     "fabric": "cotton",
-    "style": ["bold", "streetwear", "casual"],
-    "occasion": ["casual", "college", "party", "outing"],
-    "season": ["spring", "autumn", "winter"],
-    "image": "shirt_008.jpg"
-  },
-  {
-    "item_id": "shirt_009",
-    "name": "White Linen Shirt",
-    "type": "relaxed",
-    "color": "white",
-    "pattern": "solid",
-    "fit": "relaxed",
-    "length": "regular",
-    "collar": "camp",
-    "sleeve": "full",
-    "fabric": "linen",
-    "style": ["minimal", "elegant", "relaxed"],
-    "occasion": ["casual", "date", "outing", "vacation"],
-    "season": ["spring", "summer"],
-    "image": "shirt_009.jpg"
-  },
-  {
-    "item_id": "shirt_010",
-    "name": "Checked Casual Shirt",
-    "type": "classic",
-    "color": "red",
-    "pattern": "check",
-    "fit": "regular",
-    "length": "regular",
-    "collar": "button_down",
-    "sleeve": "full",
-    "fabric": "cotton",
-    "style": ["casual", "rugged"],
-    "occasion": ["casual", "college", "outing"],
-    "season": ["autumn", "winter"],
-    "image": "shirt_010.jpg"
+    "style": [
+      "streetwear",
+      "casual"
+    ],
+    "occasion": [
+      "casual",
+      "college",
+      "outing"
+    ],
+    "season": [
+      "spring",
+      "autumn",
+      "winter"
+    ],
+    "image": "female/fshirt/womenpoplinshirt.jpg.webp"
   }
 ]

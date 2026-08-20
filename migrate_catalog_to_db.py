@@ -28,6 +28,9 @@ CATALOG_ITEMS_FILE = os.path.join(BASE_DIR, "catalog_data.json")
 FEMALE_SHIRTS_FILE = os.path.join(BASE_DIR, "catalog", "female", "fshirt", "female_shirts.json")
 FEMALE_JEANS_FILE = os.path.join(BASE_DIR, "catalog", "female", "fjeans", "female_jeans.json")
 FEMALE_TOPS_FILE = os.path.join(BASE_DIR, "catalog", "female", "ftop", "female_tops.json")
+FEMALE_DRESSES_FILE = os.path.join(BASE_DIR, "catalog", "female", "fdresses", "female_dresses.json")
+FEMALE_SKIRTS_FILE = os.path.join(BASE_DIR, "catalog", "female", "fskirts", "female_skirts.json")
+FEMALE_TROUSERS_FILE = os.path.join(BASE_DIR, "catalog", "female", "ftrouser", "female_trousers.json")
 
 
 def _load_json(path):
@@ -103,6 +106,52 @@ def migrate_tops(client, path, gender):
     print(f"  tops: upserted {len(rows)} row(s)")
 
 
+def migrate_dresses(client, path, gender):
+    items = _load_json(path)
+    rows = []
+    for item in items:
+        row = _base_row(item, gender)
+        row["neckline"] = item.get("neckline")
+        row["sleeve"] = item.get("sleeve")
+        row["properties"] = item.get("properties") or []
+        row["pockets"] = item.get("pockets")
+        row["season"] = item.get("season") or []
+        rows.append(row)
+    if rows:
+        client.table("dresses").upsert(rows).execute()
+    print(f"  dresses: upserted {len(rows)} row(s)")
+
+
+def migrate_skirts(client, path, gender):
+    items = _load_json(path)
+    rows = []
+    for item in items:
+        row = _base_row(item, gender)
+        row["rise"] = item.get("rise")
+        row["properties"] = item.get("properties") or []
+        row["pockets"] = item.get("pockets")
+        row["season"] = item.get("season") or []
+        rows.append(row)
+    if rows:
+        client.table("skirts").upsert(rows).execute()
+    print(f"  skirts: upserted {len(rows)} row(s)")
+
+
+def migrate_trousers(client, path, gender):
+    items = _load_json(path)
+    rows = []
+    for item in items:
+        row = _base_row(item, gender)
+        row["rise"] = item.get("rise")
+        row["properties"] = item.get("properties") or []
+        row["pockets"] = item.get("pockets")
+        row["season"] = item.get("season") or []
+        rows.append(row)
+    if rows:
+        client.table("trousers").upsert(rows).execute()
+    print(f"  trousers: upserted {len(rows)} row(s)")
+
+
 def main():
     client = db.get_client()
 
@@ -118,6 +167,15 @@ def main():
 
     print("Migrating female_tops.json -> tops...")
     migrate_tops(client, FEMALE_TOPS_FILE, gender="Female")
+
+    print("Migrating female_dresses.json -> dresses...")
+    migrate_dresses(client, FEMALE_DRESSES_FILE, gender="Female")
+
+    print("Migrating female_skirts.json -> skirts...")
+    migrate_skirts(client, FEMALE_SKIRTS_FILE, gender="Female")
+
+    print("Migrating female_trousers.json -> trousers...")
+    migrate_trousers(client, FEMALE_TROUSERS_FILE, gender="Female")
 
     print("Done.")
 

@@ -35,6 +35,9 @@ _IMAGE_SUBDIR = {
     "shirts": os.path.join("female", "fshirt"),
     "jeans": None,
     "tops": os.path.join("female", "ftop"),
+    "dresses": os.path.join("female", "fdresses"),
+    "skirts": os.path.join("female", "fskirts"),
+    "trousers": os.path.join("female", "ftrouser"),
 }
 
 
@@ -89,6 +92,7 @@ def _row_to_garment(table_name, row, category, label):
         "neckline": row.get("neckline"),
         "sleeve": row.get("sleeve"),
         "properties": row.get("properties") or [],
+        "pockets": row.get("pockets"),
     }
 
 
@@ -113,15 +117,31 @@ def get_top_items(gender=None):
     return _load_table("tops", category="top", label="tshirt", gender=gender)
 
 
+def get_dress_items(gender=None):
+    return _load_table("dresses", category="dress", label="dress", gender=gender)
+
+
+def get_skirt_items(gender=None):
+    return _load_table("skirts", category="bottom", label="skirt", gender=gender)
+
+
+def get_trouser_items(gender=None):
+    return _load_table("trousers", category="bottom", label="trousers", gender=gender)
+
+
 def get_styling_catalog_items(gender=None):
     """
-    Combined shirts + jeans + tops -- the candidate pool
-    recommendation_engine.py's body-shape/undertone scoring actually wants.
-    Separate from get_catalog_items() below, which reads a different,
-    unrelated table (the original 7-item "Shop the Look" seed data with
-    real affiliate links) -- app.py passes both into generate_three_looks().
+    Combined shirts + jeans + tops + dresses + skirts + trousers -- the
+    candidate pool recommendation_engine.py's body-shape/undertone scoring
+    actually wants. Separate from get_catalog_items() below, which reads a
+    different, unrelated table (the original 7-item "Shop the Look" seed
+    data with real affiliate links) -- app.py passes both into
+    generate_three_looks().
     """
-    return get_shirt_items(gender) + get_jeans_items(gender) + get_top_items(gender)
+    return (
+        get_shirt_items(gender) + get_jeans_items(gender) + get_top_items(gender)
+        + get_dress_items(gender) + get_skirt_items(gender) + get_trouser_items(gender)
+    )
 
 
 def _load_catalog():
