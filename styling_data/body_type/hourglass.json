@@ -221,15 +221,32 @@
         "avoid": []
       },
       "dresses": {
-        "do": [
-          "Bias",
-          "Peplum",
-          "Shift",
-          "Wrap",
-          "Corset",
-          "Sheath"
-        ],
-        "avoid": []
+        "recommended_items": [
+          {
+            "type": "bias_cut",
+            "advice": "Bias-cut dresses skim your natural curves without clinging, following your balanced silhouette."
+          },
+          {
+            "type": "peplum",
+            "advice": "Peplum dresses accentuate your defined waist and enhance your natural curves."
+          },
+          {
+            "type": "shift",
+            "advice": "A fitted shift dress follows your curves rather than hiding them."
+          },
+          {
+            "type": "wrap",
+            "advice": "Wrap dresses cinch at the waist, highlighting your narrow midsection and emphasizing your curves."
+          },
+          {
+            "type": "corset",
+            "advice": "Corset-style dresses cinch and define your waist, playing up your naturally balanced proportions."
+          },
+          {
+            "type": "sheath",
+            "advice": "Sheath dresses follow your curves for a sleek, body-skimming silhouette."
+          }
+        ]
       }
     }
   }

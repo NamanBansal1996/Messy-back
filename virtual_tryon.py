@@ -6,6 +6,7 @@ import traceback
 import requests
 import cv2
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 try:
     from gradio_client import Client, handle_file
@@ -26,7 +27,7 @@ def file_to_base64(filepath):
 def is_space_alive(space_id="yisol/IDM-VTON"):
     try:
         url = f"https://huggingface.co/api/spaces/{space_id}"
-        r = requests.get(url, timeout=10)
+        r = requests.get(url, timeout=3)
         stage = r.json().get("runtime", {}).get("stage", "")
         print(f"[HF Space] Status: {stage}")
         return stage == "RUNNING"
@@ -144,10 +145,20 @@ def generate_tryon(person_image_b64, garment_image_b64, garment_type="upper"):
     print(f"[TryOn] garment_type={garment_type}")
 
     if is_space_alive():
-        result, err = try_on_with_idmvton(person_image_b64, garment_image_b64, garment_type)
-        if result:
-            return {"success": True, "image_b64": result, "model_used": "IDM-VTON", "error": None}
-        print(f"[TryOn] IDM-VTON attempt failed: {err}. Generating local overlay fallback...")
+        executor = ThreadPoolExecutor(max_workers=1)
+        try:
+            future = executor.submit(try_on_with_idmvton, person_image_b64, garment_image_b64, garment_type)
+            result, err = future.result(timeout=6.0)
+            executor.shutdown(wait=False)
+            if result:
+                return {"success": True, "image_b64": result, "model_used": "IDM-VTON", "error": None}
+            print(f"[TryOn] IDM-VTON attempt failed: {err}. Generating local overlay fallback...")
+        except TimeoutError:
+            print("[TryOn] IDM-VTON model request timed out after 6 seconds. Generating local overlay fallback...")
+            executor.shutdown(wait=False, cancel_futures=True)
+        except Exception as ex:
+            print(f"[TryOn] IDM-VTON error: {ex}. Generating local overlay fallback...")
+            executor.shutdown(wait=False)
     else:
         print("[TryOn] IDM-VTON Space is sleeping/unavailable. Generating local overlay fallback...")
 

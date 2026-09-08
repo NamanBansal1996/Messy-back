@@ -17,6 +17,7 @@ keeping this behind one small interface.
 
 import base64
 import colorsys
+import json
 import os
 
 import db
@@ -24,6 +25,16 @@ from color_utils import get_hex_for_color_name
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CATALOG_DIR = os.path.join(BASE_DIR, "catalog")
+CATALOG_ITEMS_FILE = os.path.join(BASE_DIR, "catalog_data.json")
+
+LOCAL_TABLE_FILES = {
+    "shirts": [os.path.join(CATALOG_DIR, "female", "fshirt", "female_shirts.json")],
+    "jeans": [os.path.join(CATALOG_DIR, "female", "fjeans", "female_jeans.json")],
+    "tops": [os.path.join(CATALOG_DIR, "female", "ftop", "female_tops.json")],
+    "dresses": [os.path.join(CATALOG_DIR, "female", "fdresses", "female_dresses.json")],
+    "skirts": [os.path.join(CATALOG_DIR, "female", "fskirts", "female_skirts.json")],
+    "trousers": [os.path.join(CATALOG_DIR, "female", "ftrouser", "female_trousers.json")],
+}
 
 # Each table's images live under a different catalog/ subfolder. jeans rows
 # store "image" as a path that already includes its own "female/fjeans/"
@@ -96,13 +107,37 @@ def _row_to_garment(table_name, row, category, label):
     }
 
 
-def _load_table(table_name, category, label, gender=None):
-    client = db.get_client()
-    response = client.table(table_name).select("*").execute()
-    items = [_row_to_garment(table_name, row, category, label) for row in response.data]
+def _load_table_from_file(table_name, category, label, gender=None):
+    files = LOCAL_TABLE_FILES.get(table_name, [])
+    all_rows = []
+    for file_path in files:
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r") as f:
+                    rows = json.load(f)
+                    for r in rows:
+                        if "gender" not in r:
+                            r["gender"] = "Female"
+                        all_rows.append(r)
+            except Exception as e:
+                print(f"[catalog] Failed to load local JSON {file_path}: {e}")
+    items = [_row_to_garment(table_name, row, category, label) for row in all_rows]
     if gender:
         items = [i for i in items if i.get("gender") in (gender, "Unisex")]
     return items
+
+
+def _load_table(table_name, category, label, gender=None):
+    try:
+        client = db.get_client()
+        response = client.table(table_name).select("*").execute()
+        items = [_row_to_garment(table_name, row, category, label) for row in response.data]
+        if gender:
+            items = [i for i in items if i.get("gender") in (gender, "Unisex")]
+        return items
+    except Exception as e:
+        print(f"[catalog] Supabase query for table '{table_name}' failed ({e}), falling back to local JSON files.")
+        return _load_table_from_file(table_name, category, label, gender)
 
 
 def get_shirt_items(gender=None):
@@ -145,9 +180,19 @@ def get_styling_catalog_items(gender=None):
 
 
 def _load_catalog():
-    client = db.get_client()
-    response = client.table("catalog_items").select("*").execute()
-    return [db.row_to_catalog_item(row) for row in response.data]
+    try:
+        client = db.get_client()
+        response = client.table("catalog_items").select("*").execute()
+        return [db.row_to_catalog_item(row) for row in response.data]
+    except Exception as e:
+        print(f"[catalog] Supabase query for 'catalog_items' failed ({e}), falling back to local catalog_data.json.")
+        if os.path.exists(CATALOG_ITEMS_FILE):
+            try:
+                with open(CATALOG_ITEMS_FILE, "r") as f:
+                    return json.load(f)
+            except Exception as ex:
+                print(f"[catalog] Failed to load {CATALOG_ITEMS_FILE}: {ex}")
+        return []
 
 
 def get_catalog_items(category=None, gender=None):

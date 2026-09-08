@@ -11,6 +11,7 @@ import math
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageOps
 import numpy as np
+import traceback
 
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
@@ -18,7 +19,7 @@ from garment_classifier import enrich_outfits_with_attributes
 from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_items
 from styling_rules import get_styling_recommendations
 from virtual_tryon import generate_tryon
-from recommendation_engine import generate_three_looks
+from recommendation_engine import generate_three_looks, generate_new_outfit_suggestions
 from catalog import get_catalog_items, get_styling_catalog_items
 from weather_service import get_current_weather
 from segformer_parser import parse_human, get_person_mask, get_skin_mask, get_hair_mask
@@ -1099,6 +1100,13 @@ def analyze_image():
     catalog_items = get_catalog_items(gender=gender) + get_styling_catalog_items(gender=gender)
     recommendation = generate_three_looks(profile, current_outfit_items, wardrobe_items, catalog_items, request_id=filename)
 
+    # New Outfit Suggestions: a separate, display-only set of 3 outfit cards
+    # (not read by Virtual Try-On) -- see recommendation_engine.py for why
+    # this is intentionally independent of the `recommendation` looks above.
+    new_outfit_suggestions = generate_new_outfit_suggestions(
+        profile, current_outfit_items, wardrobe_items, catalog_items, request_id=filename
+    )
+
     # ---------------- FINAL RESPONSE ----------------
     return jsonify({
         "body_type": body_type,
@@ -1117,6 +1125,7 @@ def analyze_image():
         "styling_recommendations": styling_recommendations,
         "recommended_looks": recommendation["looks"],
         "styling": recommendation["styling"],
+        "outfit_suggestions": new_outfit_suggestions["looks"],
         "closet_info": {
             "saved": added_count > 0,
             "added_count": added_count,
@@ -1365,4 +1374,4 @@ def merge_session():
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=5000)
+    app.run(host="0.0.0.0", debug=True, port=5000, threaded=True)

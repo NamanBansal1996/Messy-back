@@ -79,19 +79,36 @@
         ]
       },
       "dresses": {
-        "do": [
-          "Wrap",
-          "X-line",
-          "Shift",
-          "Empire",
-          "Princess seam",
-          "A-line",
-          "Fit and flared",
-          "One shoulder",
-          "Puff sleeves",
-          "Ruched waist"
-        ],
-        "avoid": []
+        "recommended_items": [
+          {
+            "type": "wrap",
+            "advice": "Wrap dresses create the illusion of a defined waist on a straight silhouette."
+          },
+          {
+            "type": "x_line",
+            "advice": "X-line dresses, fitted through the waist and flaring at the hem, create curves a straight silhouette doesn't naturally have."
+          },
+          {
+            "type": "shift",
+            "advice": "Shift dresses skim your straight line for a clean, effortless silhouette."
+          },
+          {
+            "type": "empire_waist",
+            "advice": "Empire-waist dresses set a defined waistline higher up, adding shape to a straight torso."
+          },
+          {
+            "type": "a_line",
+            "advice": "A-line dresses flare from the waist, adding the illusion of curves to a straight frame."
+          },
+          {
+            "type": "fit_and_flare",
+            "advice": "Fit-and-flare dresses cinch at the waist and flare out, creating curves your straight silhouette doesn't have on its own."
+          },
+          {
+            "type": "one_shoulder",
+            "advice": "One-shoulder dresses add asymmetry and visual interest to a straight silhouette."
+          }
+        ]
       },
       "tshirts": {
         "do": [

@@ -196,6 +196,7 @@ _SILHOUETTE_CATEGORY_KEY = {
     ("bottom", "jeans"): "jeans",
     ("top", "shirt"): "shirt_fits",
     ("top", "tshirt"): "top_fits",
+    ("dress", "dress"): "dresses",
 }
 
 
@@ -855,3 +856,141 @@ def generate_three_looks(profile, current_outfit_items, wardrobe_items, catalog_
     styling = _build_styling_payload(profile, looks)
 
     return {"looks": looks, "styling": styling}
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# New Outfit Suggestions -- a separate, display-only feature from the three
+# looks above. Intentionally independent of generate_three_looks()/compose_look()
+# and never read by virtual_tryon.py or VirtualTryOn.jsx: Look A above is
+# designed to MIRROR the current photo (require_current), which is the
+# opposite of what these cards are for. Reuses the same per-garment scoring
+# (score_garment_fit, _silhouette_bonus, _body_shape_bonus, _undertone_bonus,
+# color_harmony_bonus) so "read the body-shape rule, read the undertone
+# colors, then search wardrobe+catalog" is the same underlying mechanism --
+# just applied without the require_current lock and without footwear/
+# accessories, since these cards show only the core outfit.
+# ─────────────────────────────────────────────────────────────────────────
+
+def _detect_outfit_mode(current_outfit_items):
+    """
+    "dress" if the just-analyzed photo included a dress, else "top_bottom".
+    Deliberately simple for this first pass -- a photo with both a dress and
+    a separately-detected top (e.g. a cardigan), or with nothing detected at
+    all, isn't handled specially yet; it just falls through to "top_bottom".
+    """
+    for item in current_outfit_items or []:
+        if item.get("category") == "dress":
+            return "dress"
+    return "top_bottom"
+
+
+def compose_new_suggestion(look_id, candidates_by_cat, profile, mode, excluded_ids):
+    """
+    One NEW outfit-suggestion card: a single dress (dress mode) or a
+    top+bottom pair (top_bottom mode), scored and picked from a candidate
+    pool that the caller has already stripped of the current-detected
+    garment(s). excluded_ids additionally keeps this card distinct from
+    cards already built earlier in this same batch.
+    """
+    chosen = {}
+    rationale = []
+    total_score = 0.0
+
+    if mode == "dress":
+        best = _best_candidate(candidates_by_cat.get("dress", []), profile, excluded_ids)
+        if not best:
+            return None
+        score, garment, reason = best
+        chosen["dress"] = garment
+        total_score += score
+        rationale.extend(reason)
+    else:
+        for category in ("top", "bottom"):
+            best = _best_candidate(candidates_by_cat.get(category, []), profile, excluded_ids)
+            if not best:
+                continue
+            score, garment, reason = best
+            chosen[category] = garment
+            total_score += score
+            rationale.extend(reason)
+
+        if not chosen:
+            return None
+
+        if chosen.get("top") and chosen.get("bottom"):
+            harmony = color_harmony_bonus(chosen["top"].get("dominant_hex"), chosen["bottom"].get("dominant_hex"))
+            total_score += W_COLOR_HARMONY * harmony
+            if harmony > 0:
+                rationale.append("Top and bottom colors work well together")
+
+    return {
+        "look_id": look_id,
+        "dress": chosen.get("dress"),
+        "top": chosen.get("top"),
+        "bottom": chosen.get("bottom"),
+        "score": round(total_score, 3),
+        "rationale": rationale[:MAX_RATIONALE_ITEMS],
+    }
+
+
+def generate_new_outfit_suggestions(profile, current_outfit_items, wardrobe_items, catalog_items, request_id=None):
+    """
+    Three NEW outfit-suggestion cards for display only (no footwear/
+    accessories, no try-on wiring). All three share the same garment-type
+    mode as whatever the current photo showed (all dresses, or all
+    top+bottom), and none of them can be the current-detected garment
+    itself -- that's excluded from the candidate pool entirely, not just
+    de-prioritized, so every card is a genuinely new suggestion.
+    """
+    tag = f"[NEW_SUGGESTIONS:{request_id}]" if request_id else "[NEW_SUGGESTIONS]"
+
+    mode = _detect_outfit_mode(current_outfit_items)
+    current_ids = {_garment_id(item) for item in (current_outfit_items or [])}
+    # _garment_id() alone isn't enough to exclude the current photo's own
+    # garment(s) from wardrobe_items: a fresh detection dict has no "id"/
+    # "image_hash" yet, so _garment_id() falls back to hashing category+
+    # label+dominant_hex -- but by the time this runs, app.py has already
+    # persisted that same garment into the closet (add_items_to_closet),
+    # and get_user_closet() hands it back with an "image_hash" keyed off
+    # the image bytes instead. Those two hashes never match, so id-only
+    # exclusion silently lets the just-worn garment back in. Matching on
+    # the (category, label, color) content signature instead catches it
+    # regardless of which representation it shows up in.
+    current_signatures = {
+        (item.get("category"), (item.get("label") or "").lower(), (item.get("dominant_hex") or "").lower())
+        for item in (current_outfit_items or [])
+    }
+
+    # wardrobe history + catalog, minus anything already in the current photo.
+    pool_items = [
+        item for item in (wardrobe_items or []) + (catalog_items or [])
+        if _garment_id(item) not in current_ids
+        and (item.get("category"), (item.get("label") or "").lower(), (item.get("dominant_hex") or "").lower())
+        not in current_signatures
+    ]
+    candidates_by_cat = _group_by_category(pool_items)
+    print(f"{tag} mode={mode} pool_size={len(pool_items)}")
+
+    looks = []
+    used_ids = set()
+    for look_id in ("A", "B", "C"):
+        look = compose_new_suggestion(look_id, candidates_by_cat, profile, mode, used_ids)
+        if not look:
+            print(f"{tag} WARNING: no candidate available for look {look_id} (mode={mode})")
+            continue
+        looks.append(look)
+        for category in ("dress", "top", "bottom"):
+            garment = look.get(category)
+            if garment:
+                used_ids.add(_garment_id(garment))
+
+    signatures = [tuple(sorted(
+        _garment_id(g) for g in (look.get("dress"), look.get("top"), look.get("bottom")) if g
+    )) for look in looks]
+    if len(set(signatures)) < len(signatures):
+        print(f"{tag} WARNING: duplicate suggestion(s) detected even after exclusion -- "
+              f"pool is too small to produce 3 distinct suggestions. signatures={signatures}")
+    else:
+        print(f"{tag} diversity check passed: {len(looks)} distinct suggestion(s) generated")
+
+    return {"looks": looks, "mode": mode}

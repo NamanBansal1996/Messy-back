@@ -162,16 +162,36 @@
         "avoid": []
       },
       "dresses": {
-        "do": [
-          "Tulip",
-          "A-line",
-          "X-line",
-          "Empire",
-          "Off-shoulder",
-          "Wrap",
-          "Belted"
-        ],
-        "avoid": []
+        "recommended_items": [
+          {
+            "type": "tulip",
+            "advice": "Tulip dresses skim gently over the hips without clinging, keeping the lower half streamlined."
+          },
+          {
+            "type": "a_line",
+            "advice": "A-line dresses skim over fuller hips for a balanced, streamlined silhouette."
+          },
+          {
+            "type": "x_line",
+            "advice": "X-line dresses nip in at the waist and glide over the hips, balancing shoulders and hips."
+          },
+          {
+            "type": "empire_waist",
+            "advice": "Empire-waist dresses skim past the hips entirely, keeping the focus on your upper body."
+          },
+          {
+            "type": "off_shoulder",
+            "advice": "Off-shoulder dresses widen the shoulder line, balancing it against fuller hips."
+          },
+          {
+            "type": "wrap",
+            "advice": "Wrap dresses define the waist while skimming smoothly over the hips."
+          },
+          {
+            "type": "belted",
+            "advice": "A belted waist draws the eye upward, creating a defined midpoint between shoulders and hips."
+          }
+        ]
       }
     }
   }

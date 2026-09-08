@@ -189,16 +189,36 @@
         "avoid": []
       },
       "dresses": {
-        "do": [
-          "Swing style dresses",
-          "Skater dresses",
-          "Full-skirted & flared dresses",
-          "Wrap dresses",
-          "Structured shift dresses",
-          "Off-shoulder dresses",
-          "Bias-cut dresses"
-        ],
-        "avoid": []
+        "recommended_items": [
+          {
+            "type": "swing",
+            "advice": "Swing dresses skim over the midsection with a flared, floaty skirt instead of clinging to it."
+          },
+          {
+            "type": "skater",
+            "advice": "Skater dresses flare out from just under the bust, keeping the fit relaxed through the waist."
+          },
+          {
+            "type": "fit_and_flare",
+            "advice": "Full-skirted, fit-and-flare dresses skim over the midsection while still shaping the silhouette below."
+          },
+          {
+            "type": "wrap",
+            "advice": "Wrap dresses define the waist and create a balanced silhouette while flattering the bust."
+          },
+          {
+            "type": "shift",
+            "advice": "A structured shift dress skims over the midsection instead of clinging to it, staying polished without adding bulk."
+          },
+          {
+            "type": "off_shoulder",
+            "advice": "Off-shoulder dresses draw attention to the collarbone and shoulders, away from the midsection."
+          },
+          {
+            "type": "bias_cut",
+            "advice": "Bias-cut dresses drape softly over the body without clinging to the midsection."
+          }
+        ]
       }
     }
   }

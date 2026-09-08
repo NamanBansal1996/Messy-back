@@ -24,7 +24,7 @@
       "spring",
       "summer"
     ],
-    "image": "female/fshirt/womenregularshirt.jpg.webp"
+    "image": "womenregularshirt.jpg.webp"
   },
   {
     "item_id": "shirt_002",
@@ -53,7 +53,7 @@
       "autumn",
       "winter"
     ],
-    "image": "female/fshirt/women_stripedshirt.jpg.webp"
+    "image": "women_stripedshirt.jpg.webp"
   },
   {
     "item_id": "shirt_003",
@@ -82,7 +82,7 @@
       "autumn",
       "winter"
     ],
-    "image": "female/fshirt/womenblackstriped.jpg.webp"
+    "image": "womenblackstriped.jpg.webp"
   },
   {
     "item_id": "shirt_004",
@@ -108,7 +108,7 @@
       "spring",
       "summer"
     ],
-    "image": "female/fshirt/womenpinkcheck.jpg.webp"
+    "image": "womenpinkcheck.jpg.webp"
   },
   {
     "item_id": "shirt_005",
@@ -134,7 +134,7 @@
       "spring",
       "summer"
     ],
-    "image": "female/fshirt/womengreencheckshirt.jpg.webp"
+    "image": "womengreencheckshirt.jpg.webp"
   },
   {
     "item_id": "shirt_006",
@@ -163,7 +163,7 @@
       "summer",
       "autumn"
     ],
-    "image": "female/fshirt/womenpeachshirt.jpg.webp"
+    "image": "womenpeachshirt.jpg.webp"
   },
   {
     "item_id": "shirt_007",
@@ -188,7 +188,7 @@
       "spring",
       "summer"
     ],
-    "image": "female/fshirt/womendenimshirt.jpg.webp"
+    "image": "womendenimshirt.jpg.webp"
   },
   {
     "item_id": "shirt_008",
@@ -215,7 +215,7 @@
       "autumn",
       "winter"
     ],
-    "image": "female/fshirt/womenribbedshirt.jpg.webp"
+    "image": "womenribbedshirt.jpg.webp"
   },
   {
     "item_id": "shirt_009",
@@ -242,7 +242,7 @@
       "spring",
       "summer"
     ],
-    "image": "female/fshirt/womenbeigeshirt.jpg.webp"
+    "image": "womenbeigeshirt.jpg.webp"
   },
   {
     "item_id": "shirt_010",
@@ -269,6 +269,6 @@
       "autumn",
       "winter"
     ],
-    "image": "female/fshirt/womenpoplinshirt.jpg.webp"
+    "image": "womenpoplinshirt.jpg.webp"
   }
 ]

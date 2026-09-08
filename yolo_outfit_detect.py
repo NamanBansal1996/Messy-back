@@ -178,6 +178,7 @@ def detect_outfits(image, label_map=None, confidence_map=None):
         dominant_hex, dominant_hue, color_name = get_dominant_color(crop_bgr, mask=crop_item_mask)
 
         outfits[category].append({
+            "category": category,
             "label": label,
             "confidence": round(confidence, 2),
             "image": crop_b64,
