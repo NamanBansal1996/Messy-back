@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS shirts (
     length   TEXT,
     fabric   TEXT,
     collar   TEXT,
-    sleeve   TEXT,
+    sleeve_design  TEXT,  -- aesthetic style, e.g. "puff", "bishop", "bell" -- often unset
+    sleeve_length  TEXT,  -- shoulder-to-cuff length, e.g. "half", "full"
     style    JSONB,
     occasion JSONB,
     season   JSONB,
@@ -70,7 +71,8 @@ CREATE TABLE IF NOT EXISTS tops (
     fit        TEXT,
     length     TEXT,
     fabric     TEXT,
-    sleeve     TEXT,
+    sleeve_design  TEXT,  -- aesthetic style, e.g. "puff", "bishop", "bell" -- often unset
+    sleeve_length  TEXT,  -- shoulder-to-cuff length, e.g. "sleeveless", "short_sleeve", "long_sleeve"
     neckline   TEXT,
     properties JSONB,
     style      JSONB,
@@ -89,7 +91,8 @@ CREATE TABLE IF NOT EXISTS dresses (
     fit        TEXT,
     length     TEXT,
     neckline   TEXT,
-    sleeve     TEXT,
+    sleeve_design  TEXT,  -- aesthetic style, e.g. "puff", "bishop", "bell" -- often unset
+    sleeve_length  TEXT,  -- shoulder-to-cuff length, e.g. "sleeveless", "short_sleeve", "long_sleeve"
     fabric     TEXT,
     properties JSONB,
     pockets    INTEGER,
@@ -140,3 +143,21 @@ CREATE TABLE IF NOT EXISTS trousers (
 -- These tables are only ever written to by the backend (via the secret
 -- key, which bypasses RLS), so Row Level Security stays off -- there's
 -- no direct client/browser access path to lock down.
+
+-- One-off migration for an ALREADY-CREATED database: CREATE TABLE IF NOT
+-- EXISTS above won't add columns to tables that already exist. Run this
+-- block once in the Supabase SQL Editor to split the old single `sleeve`
+-- column (shirts/tops/dresses) into `sleeve_design` (aesthetic style,
+-- e.g. "puff" -- often unset) and `sleeve_length` (shoulder-to-cuff
+-- length, e.g. "half"/"full"/"sleeveless") -- they're different
+-- attributes and were being conflated under one column. Safe to re-run.
+ALTER TABLE shirts  ADD COLUMN IF NOT EXISTS sleeve_design TEXT;
+ALTER TABLE shirts  ADD COLUMN IF NOT EXISTS sleeve_length TEXT;
+ALTER TABLE tops    ADD COLUMN IF NOT EXISTS sleeve_design TEXT;
+ALTER TABLE tops    ADD COLUMN IF NOT EXISTS sleeve_length TEXT;
+ALTER TABLE dresses ADD COLUMN IF NOT EXISTS sleeve_design TEXT;
+ALTER TABLE dresses ADD COLUMN IF NOT EXISTS sleeve_length TEXT;
+
+ALTER TABLE shirts  DROP COLUMN IF EXISTS sleeve;
+ALTER TABLE tops    DROP COLUMN IF EXISTS sleeve;
+ALTER TABLE dresses DROP COLUMN IF EXISTS sleeve;

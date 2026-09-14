@@ -8,7 +8,7 @@
     "fit": "regular",
     "length": "regular",
     "collar": "neck collar",
-    "sleevelength": "half",
+    "sleeve_length": "half",
     "fabric": "cotton",
     "style": [
       "classic",
@@ -35,7 +35,7 @@
     "fit": "regular",
     "length": "regular",
     "collar": "spread",
-    "sleevelength": "full",
+    "sleeve_length": "full",
     "fabric": "cotton",
     "style": [
       "elegant",
@@ -64,7 +64,7 @@
     "fit": "regular",
     "length": "regular",
     "collar": "spread",
-    "sleevelength": "full",
+    "sleeve_length": "full",
     "fabric": "cotton",
     "style": [
       "elegant",
@@ -93,7 +93,7 @@
     "fit": "relaxed",
     "length": "long",
     "collar": "spread",
-    "sleevelength": "full",
+    "sleeve_length": "full",
     "fabric": "cotton",
     "style": [
       "casual",
@@ -119,7 +119,7 @@
     "fit": "relaxed",
     "length": "long",
     "collar": "spread",
-    "sleevelength": "full",
+    "sleeve_length": "full",
     "fabric": "cotton",
     "style": [
       "casual",
@@ -145,8 +145,8 @@
     "fit": "regular",
     "length": "hiplength",
     "collar": "neck",
-    "sleevelength": "full",
-    "sleeve": "puff",
+    "sleeve_length": "full",
+    "sleeve_design": "puff",
     "fabric": "cotton cambric",
     "style": [
       "classic",
@@ -174,7 +174,7 @@
     "fit": "regular",
     "length": "regular",
     "collar": "spread",
-    "sleevelength": "half",
+    "sleeve_length": "half",
     "fabric": "denim",
     "style": [
       "elegant",
@@ -199,7 +199,7 @@
     "fit": "slim",
     "length": "regular",
     "collar": "polo",
-    "sleevelength": "half",
+    "sleeve_length": "half",
     "fabric": "cotton",
     "style": [
       "casual",
@@ -226,7 +226,7 @@
     "fit": "regular",
     "length": "regular",
     "collar": "spread",
-    "sleevelength": "full",
+    "sleeve_length": "full",
     "fabric": "cotton",
     "style": [
       "casual",
@@ -253,7 +253,7 @@
     "fit": "relaxed",
     "length": "long",
     "collar": "spread",
-    "sleeve": "full",
+    "sleeve_length": "full",
     "fabric": "cotton",
     "style": [
       "streetwear",

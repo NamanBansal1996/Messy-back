@@ -33,13 +33,18 @@ def _bucket_condition(temp_c, weather_main):
     """
     Collapse raw API data into the simple buckets the Recommendation
     Engine's scoring rules understand: hot / cold / rain / mild.
+
+    Thresholds match the ranges documented in
+    styling_data/weather_styling_rules.json (hot 25C+, mild 10-24C,
+    cold below 10C) so the real temperature reading and the styling
+    rules agree on where each band starts.
     """
     weather_main = (weather_main or "").lower()
     if "rain" in weather_main or "drizzle" in weather_main or "thunderstorm" in weather_main:
         return "rain"
-    if temp_c >= 28:
+    if temp_c >= 25:
         return "hot"
-    if temp_c <= 12:
+    if temp_c < 10:
         return "cold"
     return "mild"
 

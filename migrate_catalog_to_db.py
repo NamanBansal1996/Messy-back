@@ -71,7 +71,8 @@ def migrate_shirts(client, path, gender):
     for item in items:
         row = _base_row(item, gender)
         row["collar"] = item.get("collar")
-        row["sleeve"] = item.get("sleeve")
+        row["sleeve_design"] = item.get("sleeve_design")
+        row["sleeve_length"] = item.get("sleeve_length")
         row["season"] = item.get("season") or []
         rows.append(row)
     if rows:
@@ -96,7 +97,8 @@ def migrate_tops(client, path, gender):
     rows = []
     for item in items:
         row = _base_row(item, gender)
-        row["sleeve"] = item.get("sleeve")
+        row["sleeve_design"] = item.get("sleeve_design")
+        row["sleeve_length"] = item.get("sleeve_length")
         row["neckline"] = item.get("neckline")
         row["properties"] = item.get("properties") or []
         row["season"] = item.get("season") or []
@@ -112,7 +114,8 @@ def migrate_dresses(client, path, gender):
     for item in items:
         row = _base_row(item, gender)
         row["neckline"] = item.get("neckline")
-        row["sleeve"] = item.get("sleeve")
+        row["sleeve_design"] = item.get("sleeve_design")
+        row["sleeve_length"] = item.get("sleeve_length")
         row["properties"] = item.get("properties") or []
         row["pockets"] = item.get("pockets")
         row["season"] = item.get("season") or []

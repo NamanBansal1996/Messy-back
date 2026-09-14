@@ -441,7 +441,33 @@ def _undertone_bonus(garment, undertone):
     return 0.0, None
 
 
-def _weather_bonus(garment, condition):
+# ─────────────────────────────────────────────────────────────────────────
+# Weather styling rules -- condition -> favor/avoid content lives in
+# styling_data/weather_styling_rules.json, not here, same separation
+# already used for undertone and body-type content above. Keyed by the
+# same hot/cold/rain/mild buckets weather_service.py derives from the
+# real OpenWeatherMap temperature reading (_bucket_condition), so this
+# module never re-guesses temperature thresholds -- it just consumes
+# whichever bucket the real reading landed in.
+# ─────────────────────────────────────────────────────────────────────────
+_WEATHER_STYLE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "styling_data", "weather_styling_rules.json")
+_weather_style_cache = None
+
+_WEATHER_AVOID_SCORE = {"hot": -1.0, "cold": -0.5}
+
+
+def _load_weather_style():
+    global _weather_style_cache
+    if _weather_style_cache is None:
+        if not os.path.exists(_WEATHER_STYLE_PATH):
+            _weather_style_cache = {}
+        else:
+            with open(_WEATHER_STYLE_PATH, "r") as f:
+                _weather_style_cache = json.load(f)
+    return _weather_style_cache
+
+
+def _weather_bonus(garment, weather):
     """
     Deliberately conservative: the detector's label vocabulary has no
     fabric/material attribute (e.g. no "suede" tag exists anywhere in the
@@ -449,24 +475,33 @@ def _weather_bonus(garment, condition):
     partially honored -- footwear gets a small positive nudge in rain
     rather than a confident "waterproof" claim, since we can't actually
     tell the difference with current data.
+
+    `weather` is the real {"temperature_c", "condition"} reading passed
+    through from weather_service.py -- condition picks the rule set,
+    temperature_c is surfaced in the rationale so the suggestion reads as
+    grounded in today's actual weather rather than a generic bucket.
     """
+    weather = weather or {}
+    condition = weather.get("condition")
+    temp_c = weather.get("temperature_c")
+
+    style = _load_weather_style().get(condition or "", {})
+    if not style:
+        return 0.0, None
+
     label = (garment.get("label") or "").lower()
+    category = garment.get("category")
 
-    if condition == "hot":
-        if label in {"tshirt", "short sleeve shirt", "shirt"}:
-            return 1.0, "Breathable choice for today's warm weather"
-        if label in {"jacket", "sweater"}:
-            return -1.0, None
+    temp_suffix = f" ({temp_c:.0f}°C)" if isinstance(temp_c, (int, float)) else ""
 
-    elif condition == "cold":
-        if label in {"jacket", "sweater", "long sleeve shirt"}:
-            return 1.0, "Warm layer for today's cold weather"
-        if label in {"short sleeve shirt", "tshirt"}:
-            return -0.5, None
+    if label in style.get("favor_labels", []):
+        return 1.0, f"Good pick for today's {condition} weather{temp_suffix}"
 
-    elif condition == "rain":
-        if garment.get("category") == "footwear":
-            return 0.3, None
+    if label in style.get("avoid_labels", []):
+        return _WEATHER_AVOID_SCORE.get(condition, -0.5), None
+
+    if category in style.get("favor_categories", []):
+        return 0.3, None
 
     return 0.0, None
 
@@ -496,7 +531,7 @@ def score_garment_fit(garment, profile):
         rationale.append(u_reason)
 
     weather = profile.get("weather") or {}
-    w_score, w_reason = _weather_bonus(garment, weather.get("condition"))
+    w_score, w_reason = _weather_bonus(garment, weather)
     score += W_WEATHER * w_score
     if w_reason:
         rationale.append(w_reason)
@@ -694,12 +729,65 @@ def _look_garment_ids(look):
     return ids
 
 
+_WEATHER_ADVICE_LABEL = {"hot": "Hot Day", "cold": "Cold Day", "rain": "Rainy Day", "mild": "Mild Day"}
+
+
+def _build_weather_advice(weather):
+    """
+    Global (not per-garment) weather styling tip for the frontend's
+    "Weather & Styling Tip" widget -- e.g. "30°C · Hot Day: Wear loose,
+    flowy silhouettes and choose breathable natural fabrics like cotton or
+    linen." Surfaces description/fit/fabrics.notes from
+    styling_data/weather_styling_rules.json as-is (for a UI that wants the
+    raw pieces) plus a single composed `tip` sentence (for a UI that just
+    wants one line). Deliberately global, not scored per garment -- that's
+    what lets this work today, ahead of any fabric/cut classification.
+
+    regional_notes and per-garment fabric scoring are intentionally not
+    surfaced here -- reserved for when fabric/cut classification or manual
+    tagging exists.
+    """
+    weather = weather or {}
+    condition = weather.get("condition")
+    temp_c = weather.get("temperature_c")
+
+    style = _load_weather_style().get(condition or "", {})
+    if not style:
+        return None
+
+    temp_part = f"{temp_c:.0f}°C" if isinstance(temp_c, (int, float)) else None
+    day_label = _WEATHER_ADVICE_LABEL.get(condition, "Today")
+    headline = f"{temp_part} · {day_label}" if temp_part else day_label
+
+    fabrics = style.get("fabrics") or {}
+    fabric_notes = fabrics.get("notes")
+
+    # One "how to wear it" line -- whichever of these the condition defines.
+    fit_line = style.get("fit") or style.get("base") or style.get("hems") or style.get("layering")
+
+    tip_parts = [p for p in (fit_line, fabric_notes) if p]
+    tip = " ".join(tip_parts) if tip_parts else style.get("description")
+
+    return {
+        "condition": condition,
+        "temperature_c": temp_c,
+        "headline": headline,
+        "description": style.get("description"),
+        "fit": style.get("fit"),
+        "fabric_notes": fabric_notes,
+        "tip": f"{headline}: {tip}" if tip else headline,
+    }
+
+
 def _build_styling_payload(profile, looks):
     """
     Shaped specifically to match what SuggestionFlow.jsx already expects
     (analysisData.styling.{clothing_recommendations, color_palette,
     visual_prompt}) -- per the audit, that UI exists today and silently
     falls back to generic text because the backend never populated this.
+
+    Also adds `weather_advice` (not yet consumed by SuggestionFlow.jsx --
+    new field for a future "Weather & Styling Tip" widget).
     """
     body_key = _normalize_body_key(profile.get("body_type"))
     cuts = BODY_CUT_HINTS.get(body_key, BODY_CUT_HINTS["rectangle"])
@@ -728,6 +816,7 @@ def _build_styling_payload(profile, looks):
         "clothing_recommendations": cuts,
         "color_palette": {"best_colors": best_colors},
         "visual_prompt": visual_prompt,
+        "weather_advice": _build_weather_advice(profile.get("weather")),
     }
 
 

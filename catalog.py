@@ -56,7 +56,18 @@ def _image_to_b64(table_name, image_path):
     if not image_path:
         return None
     subdir = _IMAGE_SUBDIR.get(table_name)
-    full_path = os.path.join(CATALOG_DIR, subdir, image_path) if subdir else os.path.join(CATALOG_DIR, image_path)
+    # Guard against double-prefixing: most tables' `image` column is a bare
+    # filename (join with subdir below), but the "shirts" table in Supabase
+    # actually stores the full "female/fshirt/..." path already -- joining
+    # subdir + that value produced a nonexistent, doubled path
+    # (catalog/female/fshirt/female/fshirt/...), which is why every shirt
+    # silently had no image_b64. Handle both conventions instead of
+    # assuming the table is consistent with the local JSON's bare filenames.
+    normalized = image_path.replace(os.sep, "/")
+    if subdir and normalized.startswith(subdir.replace(os.sep, "/") + "/"):
+        full_path = os.path.join(CATALOG_DIR, image_path)
+    else:
+        full_path = os.path.join(CATALOG_DIR, subdir, image_path) if subdir else os.path.join(CATALOG_DIR, image_path)
     if not os.path.exists(full_path):
         return None
     with open(full_path, "rb") as f:
@@ -101,7 +112,8 @@ def _row_to_garment(table_name, row, category, label):
         "fit": row.get("fit"),
         "rise": row.get("rise"),
         "neckline": row.get("neckline"),
-        "sleeve": row.get("sleeve"),
+        "sleeve_design": row.get("sleeve_design"),
+        "sleeve_length": row.get("sleeve_length"),
         "properties": row.get("properties") or [],
         "pockets": row.get("pockets"),
     }

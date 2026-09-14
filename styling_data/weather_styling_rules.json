@@ -1,0 +1,76 @@
+{
+  "hot": {
+    "temperature_range": "25°C+ / 77°F+",
+    "description": "Warm weather favors breathable, lightweight pieces over heavier layers.",
+    "favor_labels": ["tshirt", "short sleeve shirt", "shirt"],
+    "avoid_labels": ["jacket", "sweater"],
+    "fabrics": {
+      "favor": ["cotton", "linen", "AirLinen", "cotton blend", "hemp", "chiffon"],
+      "avoid": ["polyester"],
+      "notes": "Choose breathable natural materials. Avoid polyester, which traps heat."
+    },
+    "fit": "Wear loose, flowy silhouettes that allow air to circulate without clinging to your skin.",
+    "layering": "Keep layers minimal. If layering for style, use the open-over-closed rule with ultra-lightweight fabrics.",
+    "recommended_pieces": ["maxi dresses", "rompers", "shorts paired with breezy tops"],
+    "colors": {
+      "favor": ["coral", "turquoise", "lemon yellow"],
+      "prints": ["floral", "tropical patterns", "nautical stripes"]
+    },
+    "accessories": {
+      "favor": ["wide-brimmed hats", "sunglasses", "sandals", "statement jewelry (chunky bracelets, colorful beaded necklaces)", "straw tote bag", "trendy backpack"],
+      "evening_layer": "Lightweight scarves and wraps for chilly summer evenings."
+    },
+    "styling_rules": {},
+    "stylist_notes": []
+  },
+
+  "rain": {
+    "description": "Rain favors footwear suited to wet conditions; material detection (e.g. suede) isn't available yet, so this stays conservative.",
+    "favor_labels": [],
+    "favor_categories": ["footwear"],
+    "avoid_labels": [],
+    "hems": "Keep trousers cropped or tapered so they stay clear of puddles and mud.",
+    "fabrics": {
+      "favor": ["structured, quick-drying materials"],
+      "notes": "Pick materials that do not turn completely see-through or heavy when wet."
+    },
+    "colors": {
+      "favor": ["navy", "charcoal"],
+      "notes": "Deeper shades like navy or charcoal hide water splashes; vibrant colors give contrast against grey skies."
+    },
+    "styling_rules": {},
+    "stylist_notes": []
+  },
+
+  "mild": {
+    "temperature_range": "10°C–24°C / 50°F–75°F",
+    "description": "Mild, swing-prone weather calls for outfits that flex through the day.",
+    "layering": "Build outfits using three thin layers you can easily add or remove as the temperature swings.",
+    "basics": "Pair long sleeves or lightweight knits with a flexible overshirt, light jacket, or cardigan.",
+    "styling_rules": {},
+    "stylist_notes": []
+  },
+
+  "cold": {
+    "temperature_range": "Below 10°C / 50°F",
+    "description": "Cold weather favors warm layers over light, short-sleeved pieces.",
+    "favor_labels": ["jacket", "sweater", "long sleeve shirt"],
+    "avoid_labels": ["short sleeve shirt", "tshirt"],
+    "base": "Start with a thermal or merino wool base layer to retain body heat.",
+    "insulation": "Add a midweight sweater or a down puffy jacket.",
+    "outer": "Finish with a windproof or waterproof heavy outer shell, woolen socks, and insulated boots.",
+    "styling_rules": {},
+    "stylist_notes": []
+  },
+
+  "regional_notes": {
+    "indian_summer_and_monsoon_work_dressing": {
+      "question": "How to dress for work in Indian summer and monsoon without looking tired by noon?",
+      "answer": "Co-ord sets are excellent for this. So are collared dresses, easy shirt dresses, a-line dresses, breathable straight trousers, and relaxed tops."
+    },
+    "monsoon_friendly_dresses_for_daily_wear": {
+      "question": "How to choose monsoon-friendly dresses for daily wear in India?",
+      "answer": "The best fabrics for monsoon clothing in humid Indian weather are breathable, relatively quick-drying, and capable of holding shape even when the air feels damp. That's why linen, cotton, cotton-linen blends, and other airy fabrics tend to work better than anything overly dense or synthetic. Length matters too: full-length hems can become deeply irritating once roads flood even a little, which is why midi and ankle lengths tend to win — they still look elegant, but they don't drag half your neighbourhood home with you."
+    }
+  }
+}

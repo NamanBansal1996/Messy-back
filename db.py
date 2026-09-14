@@ -74,7 +74,8 @@ def _base_garment_fields(row):
 def row_to_shirt(row):
     item = _base_garment_fields(row)
     item["collar"] = row["collar"]
-    item["sleeve"] = row["sleeve"]
+    item["sleeve_design"] = row["sleeve_design"]
+    item["sleeve_length"] = row["sleeve_length"]
     item["season"] = row["season"] or []
     return item
 
@@ -87,7 +88,8 @@ def row_to_jeans_item(row):
 
 def row_to_top(row):
     item = _base_garment_fields(row)
-    item["sleeve"] = row["sleeve"]
+    item["sleeve_design"] = row["sleeve_design"]
+    item["sleeve_length"] = row["sleeve_length"]
     item["neckline"] = row["neckline"]
     item["properties"] = row["properties"] or []
     return item
@@ -96,7 +98,8 @@ def row_to_top(row):
 def row_to_dress(row):
     item = _base_garment_fields(row)
     item["neckline"] = row["neckline"]
-    item["sleeve"] = row["sleeve"]
+    item["sleeve_design"] = row["sleeve_design"]
+    item["sleeve_length"] = row["sleeve_length"]
     item["properties"] = row["properties"] or []
     item["pockets"] = row["pockets"]
     item["season"] = row["season"] or []
