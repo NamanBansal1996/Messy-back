@@ -15,6 +15,7 @@ fastapi==0.116.1
 filelock==3.20.1
 Flask==3.1.1
 flask-cors==6.0.1
+gunicorn==23.0.0
 flatbuffers==25.9.23
 fonttools==4.58.4
 fsspec==2025.5.0

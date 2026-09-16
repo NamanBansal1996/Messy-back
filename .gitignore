@@ -7,3 +7,5 @@ __pycache__/
 *.pt
 v1-yolov8/
 models/
+
+saved_looks_images/

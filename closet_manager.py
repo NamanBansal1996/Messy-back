@@ -1,22 +1,16 @@
-import json
 import os
 import hashlib
 from datetime import datetime
 
+from storage_utils import read_json, write_json_atomic
+
 CLOSET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "closet_data.json")
 
 def get_closet_data():
-    if not os.path.exists(CLOSET_FILE):
-        return {}
-    with open(CLOSET_FILE, 'r') as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return {}
+    return read_json(CLOSET_FILE, {})
 
 def save_closet_data(data):
-    with open(CLOSET_FILE, 'w') as f:
-        json.dump(data, f, indent=4)
+    write_json_atomic(CLOSET_FILE, data)
 
 def generate_image_hash(image_b64):
     """Run MD5 hash on the base64 string to identify duplicates."""

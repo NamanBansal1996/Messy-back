@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()  # loads .env (git-ignored) before anything below reads env vars, e.g. ANTHROPIC_API_KEY
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import cv2
 import os
@@ -17,6 +17,15 @@ import traceback
 from yolo_outfit_detect import detect_outfits
 from garment_classifier import enrich_outfits_with_attributes
 from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_items
+from user_store import resolve_user_id
+from profile_store import get_profile, save_profile, migrate_profile
+from saved_looks_store import (
+    get_saved_looks,
+    save_look,
+    delete_saved_look,
+    migrate_saved_looks,
+    SAVED_LOOKS_IMAGE_DIR,
+)
 from styling_rules import get_styling_recommendations
 from virtual_tryon import generate_tryon
 from recommendation_engine import generate_three_looks, generate_new_outfit_suggestions
@@ -1214,6 +1223,64 @@ def get_closet(user_id):
     return jsonify({"user_id": user_id, "closet": items})
 
 
+@app.route("/profile/<user_id>", methods=["GET"])
+def get_ai_profile(user_id):
+    """Persisted body shape/skin tone/face shape from a prior /analyze call,
+    so the Profile UI survives a page refresh instead of showing fake
+    defaults."""
+    profile = get_profile(user_id)
+    return jsonify({"user_id": user_id, "profile": profile})
+
+
+@app.route("/profile/<user_id>", methods=["POST"])
+def save_ai_profile(user_id):
+    profile_data = request.json or {}
+    saved = save_profile(user_id, profile_data)
+    return jsonify({"success": True, "user_id": user_id, "profile": saved})
+
+
+def _with_image_url(look):
+    look = dict(look)
+    look["image_url"] = f"{request.host_url.rstrip('/')}/saved-looks/images/{look['filename']}"
+    return look
+
+
+@app.route("/saved-looks/<user_id>", methods=["GET"])
+def list_saved_looks(user_id):
+    looks = [_with_image_url(look) for look in get_saved_looks(user_id)]
+    return jsonify({"user_id": user_id, "looks": looks})
+
+
+@app.route("/saved-looks/<user_id>", methods=["POST"])
+def create_saved_look(user_id):
+    data = request.json or {}
+    image_b64 = data.get("image_b64")
+    label = data.get("label")
+
+    if not image_b64:
+        return jsonify({"error": "image_b64 is required"}), 400
+
+    try:
+        entry = save_look(user_id, image_b64, label)
+    except Exception as e:
+        return jsonify({"error": f"Failed to save look: {e}"}), 400
+
+    return jsonify({"success": True, "look": _with_image_url(entry)})
+
+
+@app.route("/saved-looks/<user_id>/<look_id>", methods=["DELETE"])
+def remove_saved_look(user_id, look_id):
+    deleted = delete_saved_look(user_id, look_id)
+    if not deleted:
+        return jsonify({"error": "Look not found"}), 404
+    return jsonify({"success": True})
+
+
+@app.route("/saved-looks/images/<filename>", methods=["GET"])
+def get_saved_look_image(filename):
+    return send_from_directory(SAVED_LOOKS_IMAGE_DIR, filename)
+
+
 @app.route("/weather", methods=["GET"])
 def weather():
     """
@@ -1221,7 +1288,7 @@ def weather():
     banner) that need a current temperature without running a full /analyze
     image upload. Thin wrapper around weather_service.get_current_weather,
     which already handles missing coordinates/API key/network failure by
-    falling back to DEFAULT_WEATHER -- never raises.
+    falling back to a default reading -- never raises.
     """
     lat = request.args.get("lat", type=float)
     lon = request.args.get("lon", type=float)
@@ -1350,28 +1417,49 @@ def tryon_all_looks():
     })
 
 # ──────────────────────────────────────────────────────────────────
-# ROUTE 3: Merge temporary guest session into authenticated user session
-# POST /auth/merge-session
+# ROUTE 3: Resolve (or create) the canonical user_id for an email, then
+# merge the guest session's closet into that account.
+# POST /auth/session
+#
+# Called by both signup and login so the two flows always resolve the same
+# email to the same user_id -- previously signup minted a random UUID while
+# login derived an id from the email prefix, silently orphaning data on the
+# very common signup -> logout -> login path.
 # ──────────────────────────────────────────────────────────────────
 
-@app.route("/auth/merge-session", methods=["POST", "OPTIONS"])
-def merge_session():
+@app.route("/auth/session", methods=["POST", "OPTIONS"])
+def auth_session():
     if request.method == "OPTIONS":
         return jsonify({}), 200
 
     data = request.json or {}
     guest_id = data.get("guest_id")
-    user_id = data.get("user_id")
+    email = data.get("email")
+    name = data.get("name")
 
-    if not guest_id or not user_id:
-        return jsonify({"error": "guest_id and user_id are required"}), 400
+    if not guest_id or not email:
+        return jsonify({"error": "guest_id and email are required"}), 400
 
+    user_id, resolved_name, is_new_user = resolve_user_id(email, name)
     migrated_count = migrate_closet_items(guest_id, user_id)
+    migrate_profile(guest_id, user_id)
+    migrate_saved_looks(guest_id, user_id)
+
     return jsonify({
         "success": True,
+        "user_id": user_id,
+        "name": resolved_name,
+        "email": email,
+        "is_new_user": is_new_user,
         "migrated_items": migrated_count,
         "message": f"Successfully migrated {migrated_count} items from guest session to user account."
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=5000, threaded=True)
+    # Cloud Run (and most PaaS hosts) inject PORT and expect the app to bind
+    # to it; FLASK_DEBUG opts into the interactive debugger for local dev
+    # only -- leaving debug=True on by default is a known RCE risk once a
+    # server is reachable from the internet.
+    port = int(os.environ.get("PORT", 5000))
+    debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", debug=debug_mode, port=port, threaded=True)

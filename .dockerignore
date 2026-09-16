@@ -6,3 +6,16 @@ __pycache__
 .gitignore
 temp_uploads/
 .DS_Store
+
+# Local flat-file "databases" and generated uploads -- none of this
+# persists on Cloud Run's ephemeral filesystem anyway, and shipping the
+# dev machine's local data into the image is never correct.
+closet_data.json
+users.json
+ai_profiles.json
+saved_looks.json
+saved_looks_images/
+uploads/
+server.log
+test_*.py
+.idea
