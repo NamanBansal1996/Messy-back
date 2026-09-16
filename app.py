@@ -35,10 +35,21 @@ from segformer_parser import parse_human, get_person_mask, get_skin_mask, get_ha
 
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
-# CORS(app, resources={r"/analyze": {"origins": "*"}})
+
+# Locked down to the actual frontend origins -- this used to be "*", which
+# is fine for an unreachable localhost backend but not for a publicly
+# invokable Cloud Run service. FLASK_DEBUG (already the local-dev toggle)
+# also opts into allowing the Vite dev server origin.
+ALLOWED_ORIGINS = [
+    "https://themessy.co.in",
+    "https://www.themessy.co.in",
+]
+if os.environ.get("FLASK_DEBUG", "false").lower() == "true":
+    ALLOWED_ORIGINS.append("http://localhost:5173")
+
 CORS(
     app,
-    resources={r"/*": {"origins": "*"}}
+    resources={r"/*": {"origins": ALLOWED_ORIGINS}}
 )
 UPLOAD_FOLDER = "temp_uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
