@@ -9,9 +9,13 @@ import base64
 import mediapipe as mp
 import math
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 from PIL import Image, ImageOps
 import numpy as np
 import traceback
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
@@ -58,6 +62,25 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 mp_pose = mp.solutions.pose
 mp_face_mesh = mp.solutions.face_mesh
 mp_face_detection = mp.solutions.face_detection
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    """
+    Without this, an unhandled exception anywhere just falls through to
+    Flask's default 500 handling -- which, on Cloud Run under gunicorn, was
+    producing a bare 500 with no traceback logged anywhere (confirmed via
+    Cloud Logging: the request log showed status 500, but no application
+    log line, no traceback, nothing -- indistinguishable from an OOM kill).
+    This guarantees every failure at least gets a real traceback in the logs.
+    """
+    if isinstance(e, HTTPException):
+        return e
+    app.logger.error(
+        "Unhandled exception on %s %s:\n%s",
+        request.method, request.path, traceback.format_exc()
+    )
+    return jsonify({"error": "Internal server error"}), 500
 
 # ---------------- UTILS ----------------
 def euclidean_distance(p1, p2):
