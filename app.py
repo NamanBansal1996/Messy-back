@@ -29,6 +29,7 @@ from saved_looks_store import (
     delete_saved_look,
     migrate_saved_looks,
 )
+from gcs_storage import upload_temp_scan
 from styling_rules import get_styling_recommendations
 from virtual_tryon import generate_tryon
 from recommendation_engine import generate_three_looks, generate_new_outfit_suggestions
@@ -1092,6 +1093,15 @@ def analyze_image():
     user_id = request.form.get("user_id", "guest_user")
     added_count, duplicate_count = add_items_to_closet(user_id, outfits, gender=gender)
 
+    # person_rgba has no persisted row anywhere -- it's only ever used for
+    # this response, so it uploads to the auto-expiring temp_scans/ prefix
+    # rather than embedding ~1-2MB of base64 directly in the JSON (the
+    # actual cause of "Response size was too large" / dropped mobile
+    # connections on /analyze).
+    person_rgba_url = None
+    if person_rgba:
+        person_rgba_url = upload_temp_scan(user_id, person_rgba, content_type="image/png")
+
     message = ""
     if added_count > 0:
         message = f"Added {added_count} new item(s) to closet."
@@ -1163,7 +1173,7 @@ def analyze_image():
         "measurements": measurements,
         "quality_warnings": quality_warnings,
         "outfits": outfits,
-        "person_rgba": person_rgba,
+        "person_rgba_url": person_rgba_url,
         "styling_recommendations": styling_recommendations,
         "recommended_looks": recommendation["looks"],
         "styling": recommendation["styling"],
@@ -1300,6 +1310,25 @@ def remove_saved_look(user_id, look_id):
     if not deleted:
         return jsonify({"error": "Look not found"}), 404
     return jsonify({"success": True})
+
+
+@app.route("/admin/migrate-catalog-images", methods=["POST"])
+def admin_migrate_catalog_images():
+    """
+    One-off: uploads catalog/*.jpg local files to GCS and writes image_url
+    back onto their Supabase rows (see migrate_catalog_to_gcs.py). Gated on
+    a header matching SUPABASE_SECRET_KEY -- an existing backend-only
+    secret already never shipped to the frontend, reused here rather than
+    introducing a whole auth system for a single internal one-time action.
+    Safe to call more than once; already-migrated rows are skipped.
+    """
+    admin_key = request.headers.get("X-Admin-Key")
+    if not admin_key or admin_key != os.environ.get("SUPABASE_SECRET_KEY"):
+        return jsonify({"error": "Unauthorized"}), 403
+
+    from migrate_catalog_to_gcs import migrate_all_catalog_images
+    results = migrate_all_catalog_images()
+    return jsonify({"results": results})
 
 
 @app.route("/weather", methods=["GET"])

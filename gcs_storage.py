@@ -1,5 +1,6 @@
 import base64
 import os
+import uuid
 
 from google.cloud import storage
 
@@ -36,3 +37,17 @@ def delete_object(destination_path):
     blob = _bucket().blob(destination_path)
     if blob.exists():
         blob.delete()
+
+
+def upload_temp_scan(user_id, b64_data, content_type="image/png"):
+    """
+    For images that only matter for the current response and are never
+    referenced by any persisted row -- e.g. the /analyze person cutout.
+    Uploads under temp_scans/, which has a GCS Lifecycle Rule (see
+    infra/README or the deploy notes) auto-deleting anything under that
+    prefix after 7 days, so these don't accumulate forever the way a
+    permanent closet/saved-looks upload would.
+    """
+    ext = "png" if content_type == "image/png" else "jpg"
+    path = f"temp_scans/{user_id}/{uuid.uuid4().hex}.{ext}"
+    return upload_base64_image(path, b64_data, content_type=content_type)

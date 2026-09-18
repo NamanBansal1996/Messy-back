@@ -87,14 +87,20 @@ def _row_to_garment(table_name, row, category, label):
     """
     Shapes a shirts/jeans/tops row into the same garment-dict shape
     recommendation_engine.py already expects from wardrobe/catalog_items
-    (category, label, dominant_hex, source, image_b64, ...), plus the
+    (category, label, dominant_hex, source, image_url, ...), plus the
     type/fit/rise/neckline/properties fields its body-shape scoring reads.
-    image_b64 is base64-encoded server-side here (not a source_ref/static
-    path) so the frontend's existing garmentToFile() -- which already
-    handles image_b64 for wardrobe items -- needs no changes to use these.
+
+    Prefers image_url (GCS, set by migrate_catalog_to_gcs.py) over reading
+    and base64-encoding the local catalog/ file on every single request --
+    that local-file read used to happen for all ~69 rows on every /analyze
+    call just to score candidates, even though only ~10-15 ever end up
+    embedded in a final look. Falls back to the local-file read only for
+    rows that haven't been migrated yet (or when Supabase itself is
+    unreachable and _load_table_from_file() calls this directly).
     """
     color_name = (row.get("color") or "").replace("_", " ").title() or None
     dominant_hex = get_hex_for_color_name(row.get("color"))
+    image_url = row.get("image_url")
     return {
         "id": row["item_id"],
         "category": category,
@@ -107,7 +113,8 @@ def _row_to_garment(table_name, row, category, label):
         "source_ref": None,
         "title": row.get("name"),
         "link": None,
-        "image_b64": _image_to_b64(table_name, row.get("image")),
+        "image_url": image_url,
+        "image_b64": None if image_url else _image_to_b64(table_name, row.get("image")),
         "type": row.get("type"),
         "fit": row.get("fit"),
         "rise": row.get("rise"),

@@ -1,4 +1,5 @@
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 
 from db import get_client
 from gcs_storage import upload_base64_image
@@ -9,49 +10,78 @@ def generate_image_hash(image_b64):
 
 def add_items_to_closet(user_id, outfits_dict, gender="Unisex"):
     """
-    Takes the dictionary of detected outfits (tops, bottoms, etc.)
-    and adds each individual cropped item to the user's closet.
+    Takes the dictionary of detected outfits (tops, bottoms, etc.) and adds
+    each individual cropped item to the user's closet.
+
+    Every item in outfits_dict -- new or a duplicate of something already in
+    the closet -- is mutated in place to carry image_url instead of the
+    original base64 "image" field. That lets the caller (app.py's /analyze)
+    return the same URL in its JSON response instead of uploading the same
+    image a second time just for display.
+
+    New images upload to GCS in parallel via a thread pool -- each upload is
+    I/O-bound (network), so several genuinely overlap instead of paying the
+    latency of each one back-to-back.
     """
     client = get_client()
 
-    existing = client.table("closet_items").select("image_hash").eq("user_id", user_id).execute()
-    existing_hashes = {row["image_hash"] for row in existing.data}
+    existing = client.table("closet_items").select("image_hash,image_url").eq("user_id", user_id).execute()
+    existing_by_hash = {row["image_hash"]: row["image_url"] for row in existing.data}
+
+    # Group by hash first: handles both "already in the closet" duplicates
+    # and "the same crop was detected twice in this one photo" duplicates
+    # with one code path, and guarantees we never try to insert the same
+    # (user_id, image_hash) pair twice in one batch.
+    groups = {}
+    for category, items in outfits_dict.items():
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            img_b64 = item.get("image")
+            if not img_b64:
+                continue
+            img_hash = generate_image_hash(img_b64)
+            group = groups.setdefault(img_hash, {"category": category, "b64": img_b64, "items": []})
+            group["items"].append(item)
 
     added_count = 0
     duplicate_count = 0
-    rows_to_insert = []
+    to_upload = []
 
-    # Look through all categories (top, bottom, footwear, accessories)
-    for category, items in outfits_dict.items():
-        if isinstance(items, list):
+    for img_hash, group in groups.items():
+        items = group["items"]
+        if img_hash in existing_by_hash:
+            url = existing_by_hash[img_hash]
             for item in items:
-                img_b64 = item.get("image")
-                if not img_b64:
-                    continue
+                item["image_url"] = url
+                item.pop("image", None)
+            duplicate_count += len(items)
+        else:
+            to_upload.append((img_hash, group))
+            duplicate_count += len(items) - 1  # repeats of this same new hash within this one photo
 
-                img_hash = generate_image_hash(img_b64)
+    def _upload(entry):
+        img_hash, group = entry
+        url = upload_base64_image(f"closet/{user_id}/{img_hash}.jpg", group["b64"])
+        return img_hash, group, url
 
-                if img_hash in existing_hashes:
-                    duplicate_count += 1
-                    continue
-
-                # Store the actual image in GCS rather than embedding it
-                # as base64 -- closet_data.json used to grow huge (and
-                # slow to read/write on every request) with every
-                # detected garment's full image inlined.
-                image_url = upload_base64_image(f"closet/{user_id}/{img_hash}.jpg", img_b64)
-
+    rows_to_insert = []
+    if to_upload:
+        with ThreadPoolExecutor(max_workers=min(8, len(to_upload))) as pool:
+            for img_hash, group, url in pool.map(_upload, to_upload):
+                for item in group["items"]:
+                    item["image_url"] = url
+                    item.pop("image", None)
                 rows_to_insert.append({
                     "user_id": user_id,
-                    "category": category,
-                    "label": item.get("label", "unknown"),
+                    "category": group["category"],
+                    "label": group["items"][0].get("label", "unknown"),
                     "gender": gender,
                     "image_hash": img_hash,
-                    "image_url": image_url,
-                    "dominant_hex": item.get("dominant_hex"),
-                    "dominant_hue": item.get("dominant_hue"),
+                    "image_url": url,
+                    "dominant_hex": group["items"][0].get("dominant_hex"),
+                    "dominant_hue": group["items"][0].get("dominant_hue"),
                 })
-                existing_hashes.add(img_hash)  # guard against dupes within this same batch
                 added_count += 1
 
     if rows_to_insert:

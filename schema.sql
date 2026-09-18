@@ -208,6 +208,20 @@ CREATE TABLE IF NOT EXISTS ai_profiles (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- catalog.py's shirts/jeans/tops/dresses/skirts/trousers rows store a
+-- LOCAL FILE PATH in `image` (e.g. "female/fshirt/..."), not the image
+-- itself -- every /analyze call was reading and base64-encoding all ~69
+-- of those files off disk fresh, even for the ~54 that never end up in a
+-- final look. image_url (once migrate_catalog_to_gcs.py has run) lets
+-- catalog.py skip that local-disk read/encode entirely and serve a GCS
+-- URL directly, same as closet_items/saved_looks.
+ALTER TABLE shirts   ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE jeans    ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE tops     ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE dresses  ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE skirts   ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE trousers ADD COLUMN IF NOT EXISTS image_url TEXT;
+
 CREATE TABLE IF NOT EXISTS saved_looks (
     look_id   TEXT PRIMARY KEY,
     user_id   TEXT NOT NULL,
