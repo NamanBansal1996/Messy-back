@@ -1,17 +1,6 @@
-import os
 import uuid
 
-from storage_utils import read_json, write_json_atomic
-
-USERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.json")
-
-
-def get_users_data():
-    return read_json(USERS_FILE, {})
-
-
-def save_users_data(data):
-    write_json_atomic(USERS_FILE, data)
+from db import get_client
 
 
 def resolve_user_id(email, name=None):
@@ -22,16 +11,16 @@ def resolve_user_id(email, name=None):
     own (previously: a random UUID at signup vs. the email prefix at login).
     """
     email_key = email.strip().lower()
-    data = get_users_data()
+    client = get_client()
 
-    record = data.get(email_key)
-    if record:
+    existing = client.table("users").select("*").eq("email", email_key).limit(1).execute()
+    if existing.data:
+        record = existing.data[0]
+        resolved_name = record.get("name") or name
         if name and not record.get("name"):
-            record["name"] = name
-            save_users_data(data)
-        return record["user_id"], record.get("name") or name, False
+            client.table("users").update({"name": name}).eq("email", email_key).execute()
+        return record["user_id"], resolved_name, False
 
     user_id = "user_" + uuid.uuid4().hex[:8]
-    data[email_key] = {"user_id": user_id, "email": email, "name": name}
-    save_users_data(data)
+    client.table("users").insert({"email": email_key, "user_id": user_id, "name": name}).execute()
     return user_id, name, True

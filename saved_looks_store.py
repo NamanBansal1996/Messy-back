@@ -1,38 +1,33 @@
 import base64
 import io
-import os
 import uuid
 from datetime import datetime
 
 from PIL import Image
 
-from storage_utils import read_json, write_json_atomic
+from db import get_client
 from gcs_storage import upload_bytes, delete_object
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SAVED_LOOKS_FILE = os.path.join(BASE_DIR, "saved_looks.json")
-
-
-def get_saved_looks_data():
-    return read_json(SAVED_LOOKS_FILE, {})
-
-
-def _write_saved_looks_data(data):
-    write_json_atomic(SAVED_LOOKS_FILE, data)
 
 
 def get_saved_looks(user_id):
-    return get_saved_looks_data().get(user_id, [])
+    client = get_client()
+    result = (
+        client.table("saved_looks")
+        .select("look_id,label,gcs_path,image_url,saved_at")
+        .eq("user_id", user_id)
+        .order("saved_at")
+        .execute()
+    )
+    return result.data
 
 
 def save_look(user_id, image_b64, label):
     """
     Decodes a base64 try-on render and uploads it to GCS as a JPEG, storing
-    only the lightweight URL (not the base64) in saved_looks.json. This used
-    to write to local disk, but Cloud Run's filesystem is ephemeral per
+    only the lightweight URL in Postgres (not the base64). Saving used to
+    write to local disk, but Cloud Run's filesystem is ephemeral per
     container instance -- a look "saved" that way could vanish the moment
-    the instance recycles, or simply not exist on whichever instance serves
-    a later request.
+    the instance recycles.
     """
     if not image_b64:
         raise ValueError("image_b64 is required")
@@ -59,39 +54,34 @@ def save_look(user_id, image_b64, label):
         "saved_at": datetime.now().isoformat(),
     }
 
-    data = get_saved_looks_data()
-    data.setdefault(user_id, []).append(entry)
-    _write_saved_looks_data(data)
+    client = get_client()
+    client.table("saved_looks").insert({**entry, "user_id": user_id}).execute()
     return entry
 
 
 def delete_saved_look(user_id, look_id):
-    data = get_saved_looks_data()
-    looks = data.get(user_id, [])
-    remaining = [item for item in looks if item.get("look_id") != look_id]
-    if len(remaining) == len(looks):
+    client = get_client()
+    result = (
+        client.table("saved_looks")
+        .select("gcs_path")
+        .eq("user_id", user_id)
+        .eq("look_id", look_id)
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
         return False
 
-    deleted = next((item for item in looks if item.get("look_id") == look_id), None)
-    if deleted and deleted.get("gcs_path"):
-        delete_object(deleted["gcs_path"])
-
-    data[user_id] = remaining
-    _write_saved_looks_data(data)
+    gcs_path = result.data[0].get("gcs_path")
+    client.table("saved_looks").delete().eq("user_id", user_id).eq("look_id", look_id).execute()
+    if gcs_path:
+        delete_object(gcs_path)
     return True
 
 
 def migrate_saved_looks(guest_id, user_id):
     """Same guest -> user migration pattern as migrate_closet_items /
-    migrate_profile. Images live in GCS keyed by look_id, not user_id, so
-    only the JSON ownership entries need to move."""
-    data = get_saved_looks_data()
-    guest_looks = data.get(guest_id)
-    if not guest_looks:
-        return 0
-
-    data.setdefault(user_id, [])
-    data[user_id].extend(guest_looks)
-    del data[guest_id]
-    _write_saved_looks_data(data)
-    return len(guest_looks)
+    migrate_profile."""
+    client = get_client()
+    result = client.table("saved_looks").update({"user_id": user_id}).eq("user_id", guest_id).execute()
+    return len(result.data)

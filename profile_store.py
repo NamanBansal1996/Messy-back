@@ -1,23 +1,18 @@
-import os
-
-from storage_utils import read_json, write_json_atomic
-
-PROFILE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai_profiles.json")
-
-
-def get_profiles_data():
-    return read_json(PROFILE_FILE, {})
+from db import get_client
 
 
 def get_profile(user_id):
-    return get_profiles_data().get(user_id)
+    client = get_client()
+    result = client.table("ai_profiles").select("profile").eq("user_id", user_id).limit(1).execute()
+    if result.data:
+        return result.data[0]["profile"]
+    return None
 
 
 def save_profile(user_id, profile_data):
-    data = get_profiles_data()
-    data[user_id] = profile_data
-    write_json_atomic(PROFILE_FILE, data)
-    return data[user_id]
+    client = get_client()
+    client.table("ai_profiles").upsert({"user_id": user_id, "profile": profile_data}).execute()
+    return profile_data
 
 
 def migrate_profile(guest_id, user_id):
@@ -26,11 +21,12 @@ def migrate_profile(guest_id, user_id):
     computed while browsing as a guest over to the authenticated account,
     same pattern as migrate_closet_items in closet_manager.py.
     """
-    data = get_profiles_data()
-    if guest_id not in data:
+    client = get_client()
+    result = client.table("ai_profiles").select("profile").eq("user_id", guest_id).limit(1).execute()
+    if not result.data:
         return False
 
-    data[user_id] = data[guest_id]
-    del data[guest_id]
-    write_json_atomic(PROFILE_FILE, data)
+    profile_data = result.data[0]["profile"]
+    client.table("ai_profiles").upsert({"user_id": user_id, "profile": profile_data}).execute()
+    client.table("ai_profiles").delete().eq("user_id", guest_id).execute()
     return True

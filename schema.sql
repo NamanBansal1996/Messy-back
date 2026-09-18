@@ -161,3 +161,59 @@ ALTER TABLE dresses ADD COLUMN IF NOT EXISTS sleeve_length TEXT;
 ALTER TABLE shirts  DROP COLUMN IF EXISTS sleeve;
 ALTER TABLE tops    DROP COLUMN IF EXISTS sleeve;
 ALTER TABLE dresses DROP COLUMN IF EXISTS sleeve;
+
+-- ─────────────────────────────────────────────────────────────────
+-- App data tables: users, closet_items, ai_profiles, saved_looks.
+-- These replace the local JSON files (users.json, closet_data.json,
+-- ai_profiles.json, saved_looks.json) that used to live on Cloud Run's
+-- disk -- which is ephemeral per container instance, so that data was
+-- silently getting wiped on every cold start / new revision.
+--
+-- Same access pattern as the catalog tables above: only the backend
+-- talks to these, via the secret key (bypasses RLS), so RLS stays off.
+-- ─────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS users (
+    email      TEXT PRIMARY KEY,
+    user_id    TEXT UNIQUE NOT NULL,
+    name       TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- One row per detected garment, not one JSON blob per user -- avoids the
+-- old "read the whole list, mutate, write the whole list back" pattern
+-- (closet_data.json's actual corruption/concurrency risk).
+CREATE TABLE IF NOT EXISTS closet_items (
+    id               BIGSERIAL PRIMARY KEY,
+    user_id          TEXT NOT NULL,
+    category         TEXT,
+    label            TEXT,
+    gender           TEXT,
+    image_hash       TEXT NOT NULL,
+    image_url        TEXT NOT NULL,
+    dominant_hex     TEXT,
+    dominant_hue     INTEGER,
+    upload_timestamp TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (user_id, image_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_closet_items_user_id ON closet_items(user_id);
+
+-- The /analyze response saved here is a large, variably-shaped object
+-- (body type, measurements, outfit suggestions, etc., whatever the
+-- frontend happened to receive) -- genuinely a JSON document, not a
+-- fixed set of columns, hence JSONB rather than a normalized table.
+CREATE TABLE IF NOT EXISTS ai_profiles (
+    user_id    TEXT PRIMARY KEY,
+    profile    JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS saved_looks (
+    look_id   TEXT PRIMARY KEY,
+    user_id   TEXT NOT NULL,
+    label     TEXT,
+    gcs_path  TEXT NOT NULL,
+    image_url TEXT NOT NULL,
+    saved_at  TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_saved_looks_user_id ON saved_looks(user_id);

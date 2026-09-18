@@ -1,17 +1,7 @@
-import os
 import hashlib
-from datetime import datetime
 
-from storage_utils import read_json, write_json_atomic
+from db import get_client
 from gcs_storage import upload_base64_image
-
-CLOSET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "closet_data.json")
-
-def get_closet_data():
-    return read_json(CLOSET_FILE, {})
-
-def save_closet_data(data):
-    write_json_atomic(CLOSET_FILE, data)
 
 def generate_image_hash(image_b64):
     """Run MD5 hash on the base64 string to identify duplicates."""
@@ -22,14 +12,14 @@ def add_items_to_closet(user_id, outfits_dict, gender="Unisex"):
     Takes the dictionary of detected outfits (tops, bottoms, etc.)
     and adds each individual cropped item to the user's closet.
     """
-    data = get_closet_data()
-    
-    if user_id not in data:
-        data[user_id] = []
-        
-    user_closet = data[user_id]
+    client = get_client()
+
+    existing = client.table("closet_items").select("image_hash").eq("user_id", user_id).execute()
+    existing_hashes = {row["image_hash"] for row in existing.data}
+
     added_count = 0
     duplicate_count = 0
+    rows_to_insert = []
 
     # Look through all categories (top, bottom, footwear, accessories)
     for category, items in outfits_dict.items():
@@ -38,69 +28,62 @@ def add_items_to_closet(user_id, outfits_dict, gender="Unisex"):
                 img_b64 = item.get("image")
                 if not img_b64:
                     continue
-                    
+
                 img_hash = generate_image_hash(img_b64)
-                
-                # Check for duplicates
-                is_duplicate = False
-                for existing_item in user_closet:
-                    if existing_item.get("image_hash") == img_hash:
-                        is_duplicate = True
-                        duplicate_count += 1
-                        break
-                
-                if not is_duplicate:
-                    # Store the actual image in GCS rather than embedding it
-                    # as base64 -- closet_data.json used to grow huge (and
-                    # slow to read/write on every request) with every
-                    # detected garment's full image inlined.
-                    image_url = upload_base64_image(f"closet/{user_id}/{img_hash}.jpg", img_b64)
 
-                    new_item = {
-                        "category": category,
-                        "label": item.get("label", "unknown"),
-                        "gender": gender,
-                        "image_hash": img_hash,
-                        "image_url": image_url,
-                        "upload_timestamp": datetime.now().isoformat(),
-                        "dominant_hex": item.get("dominant_hex"),
-                        "dominant_hue": item.get("dominant_hue")
-                    }
-                    user_closet.append(new_item)
-                    added_count += 1
+                if img_hash in existing_hashes:
+                    duplicate_count += 1
+                    continue
 
-    if added_count > 0:
-        save_closet_data(data)
-        
+                # Store the actual image in GCS rather than embedding it
+                # as base64 -- closet_data.json used to grow huge (and
+                # slow to read/write on every request) with every
+                # detected garment's full image inlined.
+                image_url = upload_base64_image(f"closet/{user_id}/{img_hash}.jpg", img_b64)
+
+                rows_to_insert.append({
+                    "user_id": user_id,
+                    "category": category,
+                    "label": item.get("label", "unknown"),
+                    "gender": gender,
+                    "image_hash": img_hash,
+                    "image_url": image_url,
+                    "dominant_hex": item.get("dominant_hex"),
+                    "dominant_hue": item.get("dominant_hue"),
+                })
+                existing_hashes.add(img_hash)  # guard against dupes within this same batch
+                added_count += 1
+
+    if rows_to_insert:
+        client.table("closet_items").insert(rows_to_insert).execute()
+
     return added_count, duplicate_count
 
 def get_user_closet(user_id, gender=None):
-    data = get_closet_data()
-    user_closet = data.get(user_id, [])
+    client = get_client()
+    items = client.table("closet_items").select("*").eq("user_id", user_id).execute().data
     if gender:
-        return [item for item in user_closet if item.get("gender") in (gender, "Unisex") or not item.get("gender")]
-    return user_closet
+        return [item for item in items if item.get("gender") in (gender, "Unisex") or not item.get("gender")]
+    return items
 
 def migrate_closet_items(guest_id, user_id):
     """
     Migrates closet items from temporary guest_id to authenticated user_id.
     """
-    data = get_closet_data()
-    if guest_id not in data or not data[guest_id]:
+    client = get_client()
+    guest_items = client.table("closet_items").select("*").eq("user_id", guest_id).execute().data
+    if not guest_items:
         return 0
 
-    if user_id not in data:
-        data[user_id] = []
+    existing = client.table("closet_items").select("image_hash").eq("user_id", user_id).execute()
+    existing_hashes = {row["image_hash"] for row in existing.data}
 
-    existing_hashes = {item.get("image_hash") for item in data[user_id] if item.get("image_hash")}
     migrated_count = 0
+    for item in guest_items:
+        if item["image_hash"] in existing_hashes:
+            client.table("closet_items").delete().eq("id", item["id"]).execute()
+            continue
+        client.table("closet_items").update({"user_id": user_id}).eq("id", item["id"]).execute()
+        migrated_count += 1
 
-    for item in data[guest_id]:
-        if item.get("image_hash") not in existing_hashes:
-            data[user_id].append(item)
-            migrated_count += 1
-
-    del data[guest_id]
-    save_closet_data(data)
     return migrated_count
-
