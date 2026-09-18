@@ -198,6 +198,17 @@ CREATE TABLE IF NOT EXISTS closet_items (
 );
 CREATE INDEX IF NOT EXISTS idx_closet_items_user_id ON closet_items(user_id);
 
+-- Near-duplicate detection (not exact-hash -- two different photos of the
+-- same physical garment). possible_duplicate_of references another row's
+-- image_hash for the same user (not the internal id -- reusing that would
+-- reintroduce the int/str id collision the earlier fix in this file was
+-- for). Symmetric: when a pair is flagged, BOTH rows get
+-- possible_duplicate_of pointing at each other, so the badge/resolution
+-- flow works from whichever side the user finds first.
+ALTER TABLE closet_items ADD COLUMN IF NOT EXISTS brand TEXT;
+ALTER TABLE closet_items ADD COLUMN IF NOT EXISTS possible_duplicate_of TEXT;
+ALTER TABLE closet_items ADD COLUMN IF NOT EXISTS duplicate_resolved BOOLEAN DEFAULT false;
+
 -- The /analyze response saved here is a large, variably-shaped object
 -- (body type, measurements, outfit suggestions, etc., whatever the
 -- frontend happened to receive) -- genuinely a JSON document, not a

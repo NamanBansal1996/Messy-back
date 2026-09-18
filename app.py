@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 # 🔹 Import YOLO outfit detection
 from yolo_outfit_detect import detect_outfits
 from garment_classifier import enrich_outfits_with_attributes
-from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_items
+from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_items, resolve_duplicate
 from user_store import resolve_user_id
 from profile_store import get_profile, save_profile, migrate_profile
 from saved_looks_store import (
@@ -1264,6 +1264,21 @@ def analyze_face_only():
 def get_closet(user_id):
     items = get_user_closet(user_id)
     return jsonify({"user_id": user_id, "closet": items})
+
+
+@app.route("/closet/<user_id>/resolve-duplicate", methods=["POST"])
+def resolve_closet_duplicate(user_id):
+    data = request.json or {}
+    image_hash = data.get("image_hash")
+    matched_image_hash = data.get("matched_image_hash")
+    action = data.get("action")
+    brand = data.get("brand")
+
+    if not image_hash or not matched_image_hash or action not in ("keep_both", "keep_this", "keep_other"):
+        return jsonify({"error": "image_hash, matched_image_hash, and a valid action are required"}), 400
+
+    result = resolve_duplicate(user_id, image_hash, matched_image_hash, action, brand=brand)
+    return jsonify({"success": True, "result": result})
 
 
 @app.route("/profile/<user_id>", methods=["GET"])
