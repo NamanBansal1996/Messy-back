@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()  # loads .env (git-ignored) before anything below reads env vars, e.g. ANTHROPIC_API_KEY
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import cv2
 import os
@@ -28,7 +28,6 @@ from saved_looks_store import (
     save_look,
     delete_saved_look,
     migrate_saved_looks,
-    SAVED_LOOKS_IMAGE_DIR,
 )
 from styling_rules import get_styling_recommendations
 from virtual_tryon import generate_tryon
@@ -1273,16 +1272,9 @@ def save_ai_profile(user_id):
     return jsonify({"success": True, "user_id": user_id, "profile": saved})
 
 
-def _with_image_url(look):
-    look = dict(look)
-    look["image_url"] = f"{request.host_url.rstrip('/')}/saved-looks/images/{look['filename']}"
-    return look
-
-
 @app.route("/saved-looks/<user_id>", methods=["GET"])
 def list_saved_looks(user_id):
-    looks = [_with_image_url(look) for look in get_saved_looks(user_id)]
-    return jsonify({"user_id": user_id, "looks": looks})
+    return jsonify({"user_id": user_id, "looks": get_saved_looks(user_id)})
 
 
 @app.route("/saved-looks/<user_id>", methods=["POST"])
@@ -1299,7 +1291,7 @@ def create_saved_look(user_id):
     except Exception as e:
         return jsonify({"error": f"Failed to save look: {e}"}), 400
 
-    return jsonify({"success": True, "look": _with_image_url(entry)})
+    return jsonify({"success": True, "look": entry})
 
 
 @app.route("/saved-looks/<user_id>/<look_id>", methods=["DELETE"])
@@ -1308,11 +1300,6 @@ def remove_saved_look(user_id, look_id):
     if not deleted:
         return jsonify({"error": "Look not found"}), 404
     return jsonify({"success": True})
-
-
-@app.route("/saved-looks/images/<filename>", methods=["GET"])
-def get_saved_look_image(filename):
-    return send_from_directory(SAVED_LOOKS_IMAGE_DIR, filename)
 
 
 @app.route("/weather", methods=["GET"])

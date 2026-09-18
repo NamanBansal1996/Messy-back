@@ -3,6 +3,7 @@ import hashlib
 from datetime import datetime
 
 from storage_utils import read_json, write_json_atomic
+from gcs_storage import upload_base64_image
 
 CLOSET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "closet_data.json")
 
@@ -49,13 +50,18 @@ def add_items_to_closet(user_id, outfits_dict, gender="Unisex"):
                         break
                 
                 if not is_duplicate:
-                    # Add new item
+                    # Store the actual image in GCS rather than embedding it
+                    # as base64 -- closet_data.json used to grow huge (and
+                    # slow to read/write on every request) with every
+                    # detected garment's full image inlined.
+                    image_url = upload_base64_image(f"closet/{user_id}/{img_hash}.jpg", img_b64)
+
                     new_item = {
                         "category": category,
                         "label": item.get("label", "unknown"),
                         "gender": gender,
                         "image_hash": img_hash,
-                        "image_b64": img_b64,
+                        "image_url": image_url,
                         "upload_timestamp": datetime.now().isoformat(),
                         "dominant_hex": item.get("dominant_hex"),
                         "dominant_hue": item.get("dominant_hue")

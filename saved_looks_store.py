@@ -7,11 +7,10 @@ from datetime import datetime
 from PIL import Image
 
 from storage_utils import read_json, write_json_atomic
+from gcs_storage import upload_bytes, delete_object
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SAVED_LOOKS_FILE = os.path.join(BASE_DIR, "saved_looks.json")
-SAVED_LOOKS_IMAGE_DIR = os.path.join(BASE_DIR, "saved_looks_images")
-os.makedirs(SAVED_LOOKS_IMAGE_DIR, exist_ok=True)
 
 
 def get_saved_looks_data():
@@ -28,11 +27,12 @@ def get_saved_looks(user_id):
 
 def save_look(user_id, image_b64, label):
     """
-    Decodes a base64 try-on render and writes it to disk as a JPEG under
-    saved_looks_images/, storing only the lightweight filename (not the
-    base64) in saved_looks.json -- a full-res render is ~1MB of base64, and
-    embedding those inline the way closet_data.json does would bloat this
-    file to the multi-MB range after just a handful of saves.
+    Decodes a base64 try-on render and uploads it to GCS as a JPEG, storing
+    only the lightweight URL (not the base64) in saved_looks.json. This used
+    to write to local disk, but Cloud Run's filesystem is ephemeral per
+    container instance -- a look "saved" that way could vanish the moment
+    the instance recycles, or simply not exist on whichever instance serves
+    a later request.
     """
     if not image_b64:
         raise ValueError("image_b64 is required")
@@ -41,18 +41,21 @@ def save_look(user_id, image_b64, label):
     image_bytes = base64.b64decode(clean_b64)
 
     look_id = uuid.uuid4().hex
-    filename = f"{look_id}.jpg"
-    filepath = os.path.join(SAVED_LOOKS_IMAGE_DIR, filename)
 
-    # Re-encode to JPEG at a fixed quality so disk usage stays predictable
+    # Re-encode to JPEG at a fixed quality so storage size stays predictable
     # regardless of the source render's original format/size.
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    image.save(filepath, "JPEG", quality=85)
+    buf = io.BytesIO()
+    image.save(buf, "JPEG", quality=85)
+
+    gcs_path = f"saved_looks/{user_id}/{look_id}.jpg"
+    image_url = upload_bytes(gcs_path, buf.getvalue(), content_type="image/jpeg")
 
     entry = {
         "look_id": look_id,
         "label": label or "Saved Look",
-        "filename": filename,
+        "gcs_path": gcs_path,
+        "image_url": image_url,
         "saved_at": datetime.now().isoformat(),
     }
 
@@ -70,10 +73,8 @@ def delete_saved_look(user_id, look_id):
         return False
 
     deleted = next((item for item in looks if item.get("look_id") == look_id), None)
-    if deleted:
-        filepath = os.path.join(SAVED_LOOKS_IMAGE_DIR, deleted["filename"])
-        if os.path.exists(filepath):
-            os.remove(filepath)
+    if deleted and deleted.get("gcs_path"):
+        delete_object(deleted["gcs_path"])
 
     data[user_id] = remaining
     _write_saved_looks_data(data)
@@ -82,8 +83,8 @@ def delete_saved_look(user_id, look_id):
 
 def migrate_saved_looks(guest_id, user_id):
     """Same guest -> user migration pattern as migrate_closet_items /
-    migrate_profile. Image files stay put on disk (named by look_id, not
-    user_id) -- only the JSON ownership entries move."""
+    migrate_profile. Images live in GCS keyed by look_id, not user_id, so
+    only the JSON ownership entries need to move."""
     data = get_saved_looks_data()
     guest_looks = data.get(guest_id)
     if not guest_looks:
