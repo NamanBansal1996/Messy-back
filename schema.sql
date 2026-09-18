@@ -180,6 +180,12 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Real password verification: signup/login used to just resolve an email
+-- to a user_id with no credential check at all -- anyone could "log in" as
+-- anyone by typing their email. Never store the plaintext password, only
+-- a salted hash (werkzeug.security.generate_password_hash / scrypt).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
 -- One row per detected garment, not one JSON blob per user -- avoids the
 -- old "read the whole list, mutate, write the whole list back" pattern
 -- (closet_data.json's actual corruption/concurrency risk).

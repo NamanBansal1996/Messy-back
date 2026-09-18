@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 from yolo_outfit_detect import detect_outfits
 from garment_classifier import enrich_outfits_with_attributes
 from closet_manager import add_items_to_closet, get_user_closet, migrate_closet_items, resolve_duplicate
-from user_store import resolve_user_id
+from user_store import resolve_user_id, InvalidCredentialsError, PasswordRequiredError, PasswordTooShortError
 from profile_store import get_profile, save_profile, migrate_profile
 from saved_looks_store import (
     get_saved_looks,
@@ -1501,11 +1501,18 @@ def auth_session():
     guest_id = data.get("guest_id")
     email = data.get("email")
     name = data.get("name")
+    password = data.get("password")
 
     if not guest_id or not email:
         return jsonify({"error": "guest_id and email are required"}), 400
 
-    user_id, resolved_name, is_new_user = resolve_user_id(email, name)
+    try:
+        user_id, resolved_name, is_new_user = resolve_user_id(email, password, name)
+    except InvalidCredentialsError as e:
+        return jsonify({"error": str(e)}), 401
+    except (PasswordRequiredError, PasswordTooShortError) as e:
+        return jsonify({"error": str(e)}), 400
+
     migrated_count = migrate_closet_items(guest_id, user_id)
     migrate_profile(guest_id, user_id)
     migrate_saved_looks(guest_id, user_id)
