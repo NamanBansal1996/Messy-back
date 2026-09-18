@@ -59,9 +59,20 @@ def add_items_to_closet(user_id, outfits_dict, gender="Unisex"):
 
     return added_count, duplicate_count
 
+CLOSET_ITEM_COLUMNS = "category,label,gender,image_hash,image_url,dominant_hex,dominant_hue,upload_timestamp"
+
 def get_user_closet(user_id, gender=None):
+    """
+    Deliberately selects specific columns, not "*" -- recommendation_engine's
+    _garment_id() treats a garment dict's "id" key as an authoritative id
+    when present, preferring it over "image_hash". Postgres's own internal
+    BIGSERIAL row id would leak in under that same "id" key with select("*"),
+    silently colliding with that convention and mixing int/str ids with
+    catalog items when sorted together (the exact TypeError that broke
+    every /analyze call after this table went live).
+    """
     client = get_client()
-    items = client.table("closet_items").select("*").eq("user_id", user_id).execute().data
+    items = client.table("closet_items").select(CLOSET_ITEM_COLUMNS).eq("user_id", user_id).execute().data
     if gender:
         return [item for item in items if item.get("gender") in (gender, "Unisex") or not item.get("gender")]
     return items
