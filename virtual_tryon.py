@@ -97,6 +97,14 @@ def _landmark_placement(landmarks, garment_type, frame_w, frame_h):
 
     dx, dy = right[0] - left[0], right[1] - left[1]
     angle_deg = -np.degrees(np.arctan2(dy, dx))
+    # A person roughly facing the camera has a near-horizontal shoulder/hip
+    # line, so this should only ever correct a slight camera/pose roll. A
+    # large value here means the landmark pair isn't reliably left-right
+    # (e.g. the subject is bent over or turned side-on) -- rotating by that
+    # raw angle can flip the garment upside down, so treat anything beyond
+    # a plausible roll as unreliable and skip rotation instead.
+    if abs(angle_deg) > 30:
+        angle_deg = 0.0
 
     box_w = float(np.clip(box_w, 10, frame_w * 1.5))
     box_h = float(np.clip(box_h, 10, frame_h * 1.5))
